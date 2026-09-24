@@ -1,0 +1,3425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshField — Customer Marketplace & Dashboard</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts: Playfair Display + Poppins -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/i18n.css">
+
+    <!-- Leaflet.js CSS for Live Delivery Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        /* ============================================================
+           FRESHFIELD CUSTOMER DASHBOARD MASTER DESIGN SYSTEM
+           Light · Organic · Editorial · Marketplace Premium
+           ============================================================ */
+        :root {
+            --cream: #F8F5EC;
+            --cream-light: #FFFDF8;
+            --beige: #EEE9DA;
+            --beige-mid: #E5DEC8;
+            --green-primary: #355C24;
+            --green-secondary: #6F9638;
+            --green-soft: #A8BF72;
+            --green-pale: #EAF0DF;
+            --orange: #F28C28;
+            --orange-light: #FBBF75;
+            --orange-pale: #FCECDD;
+            --text-dark: #1F211B;
+            --text-muted: #6F7168;
+            --text-light: #9B9D95;
+            --white: #FFFFFF;
+
+            /* Status colors */
+            --status-delivered: #D6E4B8;
+            --status-delivered-t: #355C24;
+            --status-processing: #FDE8D0;
+            --status-processing-t: #D97706;
+            --status-shipped: #E0F2FE;
+            --status-shipped-t: #0284C7;
+            --status-cancelled: #FEE2E2;
+            --status-cancelled-t: #DC2626;
+
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Poppins', -apple-system, sans-serif;
+
+            --sidebar-w: 250px;
+            --sidebar-w-collapsed: 72px;
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-pill: 100px;
+
+            --shadow-sm: 0 2px 10px rgba(31, 33, 27, 0.04);
+            --shadow-md: 0 6px 24px rgba(31, 33, 27, 0.06);
+            --shadow-lg: 0 12px 40px rgba(31, 33, 27, 0.09);
+
+            --t-fast: 0.2s;
+            --t-med: 0.4s;
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--cream);
+            color: var(--text-dark);
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: var(--font-sans);
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        /* ============================================================
+           MAIN APP CONTAINER & LAYOUT
+           ============================================================ */
+        #app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ============================================================
+           SIDEBAR
+           ============================================================ */
+        #sidebar {
+            width: var(--sidebar-w);
+            background: var(--cream-light);
+            border-right: 1px solid var(--beige-mid);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            transition: width var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out);
+            padding: 24px 16px 20px;
+        }
+
+        #sidebar.collapsed {
+            width: var(--sidebar-w-collapsed);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px 24px;
+            border-bottom: 1px solid var(--beige);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-logo-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--green-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-logo-title {
+            font-family: var(--font-serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.1;
+        }
+
+        .sidebar-logo-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 11px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all var(--t-fast) var(--ease-out);
+            white-space: nowrap;
+        }
+
+        .sidebar-nav a i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav a:hover {
+            background: rgba(111, 150, 56, 0.08);
+            color: var(--green-primary);
+        }
+
+        .sidebar-nav a.active {
+            background: var(--green-pale);
+            color: var(--green-primary);
+            font-weight: 600;
+        }
+
+        .sidebar-nav a.active i {
+            color: var(--green-primary);
+        }
+
+        .nav-badge-orange {
+            margin-left: auto;
+            background: var(--orange);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: var(--radius-pill);
+        }
+
+        /* Refer & Earn Promo Card in Sidebar */
+        .sidebar-refer-card {
+            background: var(--green-pale);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin: 16px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .refer-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--green-primary);
+            margin-bottom: 2px;
+        }
+
+        .refer-desc {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            line-height: 1.3;
+            margin-bottom: 10px;
+        }
+
+        .btn-refer {
+            background: var(--green-primary);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            display: inline-block;
+        }
+
+        .refer-botanical-svg {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            width: 60px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .sidebar-logout {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            color: var(--text-dark);
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: all var(--t-fast);
+            justify-content: center;
+        }
+
+        .sidebar-logout:hover {
+            background: #FEE2E2;
+            border-color: #FCA5A5;
+            color: #DC2626;
+        }
+
+        /* ============================================================
+           MAIN WORKSPACE
+           ============================================================ */
+        #main-wrapper {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: margin-left var(--t-med) var(--ease-out);
+        }
+
+        /* Top Header */
+        .top-header {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: rgba(248, 245, 236, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--beige-mid);
+            padding: 16px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .header-left-greeting {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-greeting-txt {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.1;
+        }
+
+        .header-greeting-sub {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .location-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--cream-light);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .header-icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--beige-mid);
+            background: var(--cream-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: var(--text-dark);
+            font-size: 15px;
+            transition: all var(--t-fast);
+        }
+
+        .header-icon-btn:hover {
+            border-color: var(--green-primary);
+            color: var(--green-primary);
+        }
+
+        .noti-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--orange);
+            color: white;
+            font-size: 9.5px;
+            font-weight: 700;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-profile-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px 4px 4px;
+            background: var(--cream-light);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            cursor: pointer;
+            transition: all var(--t-fast);
+        }
+
+        .user-profile-chip:hover {
+            border-color: var(--green-primary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--green-primary);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name-txt {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Dashboard Scroll Content */
+        .dashboard-content {
+            padding: 28px 36px 60px;
+            flex: 1;
+        }
+
+        /* 3-Column Layout: Search & Hero & Products | Right Column Widgets */
+        .customer-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 310px;
+            gap: 24px;
+        }
+
+        /* Large Search Bar Experience */
+        .search-hero-box {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .main-search-input-wrap {
+            display: flex;
+            align-items: center;
+            background: var(--cream-light);
+            border: 1.5px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            padding: 6px 8px 6px 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--t-fast);
+        }
+
+        .main-search-input-wrap:focus-within {
+            border-color: var(--green-primary);
+            box-shadow: 0 0 0 3px rgba(53, 92, 36, 0.08);
+            background: var(--white);
+        }
+
+        .main-search-input-wrap i.search-icon {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-right: 12px;
+        }
+
+        .main-search-input-wrap input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            font-size: 14px;
+            color: var(--text-dark);
+            outline: none;
+        }
+
+        .btn-search-go {
+            width: 42px;
+            height: 42px;
+            background: var(--green-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all var(--t-fast);
+        }
+
+        .btn-search-go:hover {
+            background: var(--green-secondary);
+            transform: scale(1.05);
+        }
+
+        /* Horizontal Benefit/Trust Strip */
+        .trust-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 10px 4px;
+            font-size: 12px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .trust-strip-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trust-strip-item i {
+            color: var(--green-primary);
+            font-size: 14px;
+        }
+
+        /* Hero Promotional Banner */
+        .customer-hero-banner {
+            background: linear-gradient(135deg, #EAF0DF 0%, #FFFDF8 100%);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-lg);
+            padding: 32px 36px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-banner-txt h2 {
+            font-family: var(--font-serif);
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.15;
+            margin-bottom: 10px;
+        }
+
+        .hero-banner-txt p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            max-width: 320px;
+        }
+
+        .hero-banner-btns {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-hero-primary {
+            background: var(--green-primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(53, 92, 36, 0.25);
+            transition: all var(--t-fast);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(53, 92, 36, 0.35);
+        }
+
+        .btn-hero-outline {
+            background: transparent;
+            color: var(--green-primary);
+            border: 1.5px solid var(--green-primary);
+            padding: 11px 22px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            transition: all var(--t-fast);
+        }
+
+        .btn-hero-outline:hover {
+            background: var(--green-primary);
+            color: white;
+        }
+
+        .hero-banner-img-wrap {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .hero-banner-img {
+            width: 100%;
+            max-width: 320px;
+            height: 190px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Shop By Category Section */
+        .section-box {
+            margin-bottom: 28px;
+        }
+
+        .section-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-box-title {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .section-box-link {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border: 1px solid var(--beige-mid);
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            transition: all var(--t-fast);
+        }
+
+        .section-box-link:hover {
+            border-color: var(--green-primary);
+            color: var(--green-primary);
+        }
+
+        .categories-flex {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .category-circle-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .category-circle-img {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--green-pale);
+            border: 1.5px solid var(--beige-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all var(--t-fast);
+        }
+
+        .category-circle-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .category-circle-item:hover .category-circle-img {
+            transform: scale(1.06);
+            border-color: var(--green-primary);
+        }
+
+        .category-label-txt {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Main Products Section (Fresh Picks For You) */
+        .filters-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .select-filter {
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--beige-mid);
+            background: var(--white);
+            font-size: 12.5px;
+            color: var(--text-dark);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* Product Card - Matching Reference Image */
+        .product-card {
+            background: var(--cream-light);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .product-card-top {
+            position: relative;
+            height: 160px;
+            background: var(--beige);
+            overflow: hidden;
+        }
+
+        .product-card-top img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s var(--ease-out);
+        }
+
+        .product-card:hover .product-card-top img {
+            transform: scale(1.05);
+        }
+
+        .wishlist-btn-top {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            transition: all var(--t-fast);
+            cursor: pointer;
+        }
+
+        .wishlist-btn-top:hover {
+            color: #DC2626;
+            background: var(--white);
+            transform: scale(1.1);
+        }
+
+        .wishlist-btn-top.active {
+            color: #DC2626 !important;
+            background: #FFF1F2 !important;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+            transform: scale(1.1);
+        }
+
+        .wishlist-btn-top.active i {
+            color: #DC2626 !important;
+            font-weight: 900 !important;
+        }
+
+        .btn-remove-wishlist {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: var(--radius-pill);
+            background: #FFF1F2;
+            color: #E11D48;
+            border: 1px solid #FECDD3;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--t-fast);
+            margin-top: 6px;
+            width: 100%;
+        }
+
+        .btn-remove-wishlist:hover {
+            background: #FFE4E6;
+            color: #BE123C;
+            border-color: #FDA4AF;
+            transform: translateY(-1px);
+        }
+
+        .product-card-body {
+            padding: 14px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .product-card-name {
+            font-family: var(--font-serif);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-card-farm {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .product-card-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--green-primary);
+            margin-bottom: 12px;
+        }
+
+        .product-card-unit {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .btn-add-cart-card {
+            width: 100%;
+            padding: 10px;
+            background: var(--green-primary);
+            color: white;
+            border-radius: var(--radius-pill);
+            font-size: 12.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: auto;
+            transition: all var(--t-fast);
+        }
+
+        .btn-add-cart-card:hover {
+            background: var(--green-secondary);
+            transform: translateY(-1px);
+        }
+
+        /* Bottom Section: Why Choose FreshField */
+        .why-freshfield-box {
+            background: var(--cream-light);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 32px;
+        }
+
+        .why-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .why-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--green-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green-primary);
+            font-size: 14px;
+        }
+
+        .why-txt strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .why-txt span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================================
+           RIGHT-SIDE CUSTOMER WIDGETS COLUMN
+           ============================================================ */
+        .customer-right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .widget-box {
+            background: var(--cream-light);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Widget 1: My Balance */
+        .balance-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .balance-val {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .balance-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .btn-balance-details {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+            border: 1px solid var(--beige-mid);
+            padding: 5px 14px;
+            border-radius: var(--radius-pill);
+            background: var(--white);
+        }
+
+        /* Widget 2: My Orders Breakdown */
+        .widget-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .widget-title-txt {
+            font-family: var(--font-serif);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .widget-title-link {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .order-status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .order-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+        }
+
+        .order-status-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dark);
+        }
+
+        .order-status-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .order-status-count {
+            font-size: 11px;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--beige);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Widget 3: Recent Order items */
+        .mini-order-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--beige);
+        }
+
+        .mini-order-item:last-child {
+            border-bottom: none;
+        }
+
+        .mini-order-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--beige);
+            flex-shrink: 0;
+        }
+
+        .mini-order-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mini-order-name {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-order-farm {
+            font-size: 10.5px;
+            color: var(--text-muted);
+        }
+
+        .mini-order-price {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--green-primary);
+        }
+
+        /* Widget 4: Become a Member */
+        .member-box {
+            background: var(--green-pale);
+            border-color: var(--green-soft);
+        }
+
+        .member-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .member-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        /* Payment Method Card Styles */
+        .payment-method-card {
+            background: var(--white);
+            border: 2px solid var(--beige-mid);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .payment-method-card:hover {
+            border-color: var(--green-soft);
+            background: #fbfbf9;
+            transform: translateY(-1px);
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--green-primary);
+            background: #f2f7ef;
+            box-shadow: 0 2px 10px rgba(53, 92, 36, 0.12);
+        }
+
+        .pm-icon-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pm-radio-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--beige-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--white);
+            transition: all 0.2s ease;
+            color: #ffffff;
+        }
+
+        .payment-method-card.selected .pm-radio-circle {
+            border-color: var(--green-primary);
+            background: var(--green-primary);
+        }
+
+        .btn-added-state {
+            background-color: #16a34a !important;
+            color: #ffffff !important;
+            border-color: #16a34a !important;
+            transform: scale(0.98);
+        }
+
+        /* Toast Alert Container */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Cart Slide-out Drawer */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1400;
+            background: rgba(31, 33, 27, 0.4);
+            backdrop-filter: blur(3px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--t-med);
+        }
+
+        .cart-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: -460px;
+            bottom: 0;
+            width: 400px;
+            z-index: 1500;
+            background: var(--cream-light);
+            border-left: 1px solid var(--beige-mid);
+            display: flex;
+            flex-direction: column;
+            transition: right var(--t-med) var(--ease-out);
+            box-shadow: -8px 0 35px rgba(31, 33, 27, 0.1);
+        }
+
+        #cart-sidebar.open {
+            right: 0;
+        }
+
+        .cart-drawer-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--beige-mid);
+        }
+
+        .cart-drawer-title {
+            font-family: var(--font-serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .cart-drawer-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--beige);
+            font-size: 13px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--t-fast);
+        }
+
+        .cart-drawer-close:hover {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+
+        #cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cart-drawer-footer {
+            border-top: 1px solid var(--beige-mid);
+            padding: 16px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--cream-light);
+        }
+
+        .cart-drawer-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-drawer-total-label {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .cart-drawer-total-val {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--green-primary);
+        }
+
+        .btn-drawer-checkout {
+            width: 100%;
+            padding: 13px;
+            background: var(--green-primary);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            transition: background var(--t-fast);
+        }
+
+        .btn-drawer-checkout:hover {
+            background: var(--green-secondary);
+        }
+
+        /* Sub-Pages (Orders, Wishlist, Profile) */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+            animation: pageFade 0.4s var(--ease-out);
+        }
+
+        @keyframes pageFade {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 1100px) {
+            .customer-main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-right-column {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #main-wrapper {
+                margin-left: 0 !important;
+            }
+
+            .top-header {
+                padding: 14px 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .dashboard-content {
+                padding: 20px;
+            }
+
+            .customer-hero-banner {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            .hero-banner-img-wrap {
+                display: none;
+            }
+
+            .customer-right-column {
+                grid-template-columns: 1fr;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ============================================================
+           MODAL & TRACKING STEPPER STYLES
+           ============================================================ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(31, 33, 27, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .modal-overlay.open {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            animation: modalFadeIn 0.25s var(--ease-out);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-box {
+            background: var(--cream-light);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 640px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--beige);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            color: var(--text-dark);
+        }
+
+        .modal-close-btn {
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--t-fast);
+        }
+
+        .modal-close-btn:hover {
+            background: var(--beige);
+            color: var(--text-dark);
+        }
+
+        /* Tracking Stepper */
+        .tracking-stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .step-row {
+            display: flex;
+            gap: 16px;
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .step-row:last-child {
+            padding-bottom: 0;
+        }
+
+        .step-icon-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--beige);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+
+        .step-row.completed .step-dot {
+            background: var(--green-primary);
+            color: white;
+        }
+
+        .step-row.current .step-dot {
+            background: var(--orange);
+            color: white;
+            box-shadow: 0 0 0 4px var(--orange-pale);
+            animation: pulseStep 1.8s infinite;
+        }
+
+        @keyframes pulseStep {
+            0% {
+                box-shadow: 0 0 0 0 rgba(242, 140, 40, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(242, 140, 40, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(242, 140, 40, 0);
+            }
+        }
+
+        .step-line {
+            width: 2px;
+            flex: 1;
+            background: var(--beige-mid);
+            margin: 4px 0;
+            min-height: 24px;
+        }
+
+        .step-row.completed .step-line {
+            background: var(--green-primary);
+        }
+
+        .step-content {
+            flex: 1;
+            padding-top: 6px;
+        }
+
+        .step-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .step-row.completed .step-label {
+            color: var(--green-primary);
+        }
+
+        .step-row.current .step-label {
+            color: var(--orange);
+        }
+
+        .step-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .step-note {
+            font-size: 12px;
+            color: var(--text-dark);
+            background: var(--beige);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* ============================================================
+           PROFESSIONAL CUSTOMER ORDERS SECTION STYLES
+           ============================================================ */
+        .orders-page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+
+        .orders-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .orders-breadcrumbs a {
+            color: var(--text-muted);
+            transition: color var(--t-fast);
+        }
+
+        .orders-breadcrumbs a:hover {
+            color: var(--green-primary);
+        }
+
+        .orders-page-title {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .orders-page-subtitle {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Summary Stats Cards Strip */
+        .orders-summary-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 992px) {
+            .orders-summary-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .orders-summary-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .order-stat-card {
+            background: var(--white);
+            border: 1px solid var(--beige);
+            border-radius: var(--radius-lg);
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 6px rgba(31, 33, 27, 0.03);
+            transition: all var(--t-fast) var(--ease-out);
+        }
+
+        .order-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(31, 33, 27, 0.06);
+            border-color: var(--beige-mid);
+        }
+
+        .order-stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+
+        .order-stat-icon.total {
+            background: #EAF0DF;
+            color: var(--green-primary);
+        }
+
+        .order-stat-icon.active {
+            background: #E0F2FE;
+            color: #0284C7;
+        }
+
+        .order-stat-icon.delivered {
+            background: #DCFCE7;
+            color: #16A34A;
+        }
+
+        .order-stat-icon.spent {
+            background: #FCECDD;
+            color: var(--orange);
+        }
+
+        .order-stat-val {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.1;
+        }
+
+        .order-stat-lbl {
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Filter & Search Toolbar */
+        .orders-toolbar {
+            background: var(--white);
+            border: 1px solid var(--beige);
+            border-radius: var(--radius-lg);
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(31, 33, 27, 0.02);
+        }
+
+        .orders-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 2px 0;
+        }
+
+        .order-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--t-fast);
+            white-space: nowrap;
+        }
+
+        .order-tab-btn:hover {
+            color: var(--green-primary);
+            background: rgba(111, 150, 56, 0.08);
+        }
+
+        .order-tab-btn.active {
+            background: var(--green-primary);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 3px 10px rgba(53, 92, 36, 0.25);
+        }
+
+        .tab-count {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: var(--radius-pill);
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .order-tab-btn.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
+        .orders-search-view-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .orders-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .orders-search-box i {
+            position: absolute;
+            left: 14px;
+            font-size: 13px;
+            color: var(--text-light);
+            pointer-events: none;
+        }
+
+        .orders-search-box input {
+            background: var(--cream);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            padding: 8px 32px 8px 36px;
+            font-size: 13px;
+            color: var(--text-dark);
+            outline: none;
+            width: 240px;
+            transition: all var(--t-fast);
+        }
+
+        .orders-search-box input:focus {
+            background: white;
+            border-color: var(--green-primary);
+            box-shadow: 0 0 0 3px rgba(53, 92, 36, 0.12);
+            width: 280px;
+        }
+
+        .orders-search-box button {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .orders-view-toggle {
+            display: flex;
+            background: var(--cream);
+            border: 1px solid var(--beige-mid);
+            border-radius: var(--radius-pill);
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .view-toggle-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all var(--t-fast);
+        }
+
+        .view-toggle-btn.active {
+            background: white;
+            color: var(--green-primary);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Modern Order Card */
+        .order-card-modern {
+            background: var(--white);
+            border: 1px solid var(--beige-mid);
+            border-radius: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(31, 33, 27, 0.04);
+            overflow: hidden;
+            transition: all var(--t-fast) var(--ease-out);
+        }
+
+        .order-card-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(31, 33, 27, 0.08);
+            border-color: var(--green-soft);
+        }
+
+        .order-card-top {
+            background: var(--cream);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--beige);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .order-card-id-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .order-id-chip {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+            background: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--beige-mid);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn {
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 11.5px;
+            transition: color var(--t-fast);
+        }
+
+        .copy-btn:hover {
+            color: var(--green-primary);
+        }
+
+        .order-date-text {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .order-pay-method-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--green-primary);
+            background: var(--green-pale);
+            padding: 3px 9px;
+            border-radius: var(--radius-pill);
+            text-transform: capitalize;
+        }
+
+        /* Order Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: capitalize;
+        }
+
+        .status-pill.delivered {
+            background: #EAF0DF;
+            color: #2D4A1D;
+            border: 1px solid #D2E4BD;
+        }
+
+        .status-pill.confirmed {
+            background: #E0F2FE;
+            color: #0369A1;
+            border: 1px solid #BAE6FD;
+        }
+
+        .status-pill.processing {
+            background: #EEF2FF;
+            color: #4338CA;
+            border: 1px solid #E0E7FF;
+        }
+
+        .status-pill.out_for_delivery,
+        .status-pill.shipped {
+            background: #DCFCE7;
+            color: #15803D;
+            border: 1px solid #BBF7D0;
+        }
+
+        .status-pill.pending {
+            background: #FEF3C7;
+            color: #B45309;
+            border: 1px solid #FDE68A;
+        }
+
+        .status-pill.cancelled {
+            background: #FEE2E2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+        }
+
+        .pulse-live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: radarPulse 1.8s infinite;
+        }
+
+        @keyframes radarPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* Order Card Body */
+        .order-card-body {
+            padding: 18px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .order-card-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .order-items-scroll {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .order-single-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .order-item-img {
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: var(--cream);
+            border: 1px solid var(--beige);
+            flex-shrink: 0;
+        }
+
+        .order-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .order-item-name {
+            font-family: var(--font-serif);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+            line-height: 1.25;
+        }
+
+        .order-item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .order-item-farmer {
+            color: var(--green-primary);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .order-shipping-dest {
+            background: var(--cream-light);
+            border: 1px solid var(--beige);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            max-width: 320px;
+        }
+
+        .order-shipping-dest-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Order Card Footer */
+        .order-card-footer {
+            background: var(--cream-light);
+            border-top: 1px solid var(--beige);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .order-total-block {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .order-total-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .order-total-value {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--green-primary);
+        }
+
+        .free-delivery-tag {
+            font-size: 10.5px;
+            color: #16A34A;
+            background: #DCFCE7;
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            font-weight: 600;
+        }
+
+        .order-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-order-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: var(--radius-pill);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--t-fast);
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-order-action.primary {
+            background: var(--green-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(53, 92, 36, 0.2);
+        }
+
+        .btn-order-action.primary:hover {
+            background: var(--green-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(53, 92, 36, 0.3);
+        }
+
+        .btn-order-action.live-map {
+            background: #0284C7;
+            color: white;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+            animation: pulseMapBtn 2s infinite;
+        }
+
+        @keyframes pulseMapBtn {
+
+            0%,
+            100% {
+                box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+            }
+
+            50% {
+                box-shadow: 0 4px 14px rgba(2, 132, 199, 0.5);
+            }
+        }
+
+        .btn-order-action.live-map:hover {
+            background: #0369A1;
+            transform: translateY(-1px);
+        }
+
+        .btn-order-action.secondary {
+            background: white;
+            color: var(--text-dark);
+            border: 1px solid var(--beige-mid);
+        }
+
+        .btn-order-action.secondary:hover {
+            background: var(--cream);
+            border-color: var(--green-soft);
+            color: var(--green-primary);
+        }
+
+        /* Modern Table View */
+        .orders-table-card {
+            background: var(--white);
+            border: 1px solid var(--beige-mid);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(31, 33, 27, 0.04);
+        }
+
+        .orders-table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .orders-table-modern {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .orders-table-modern th {
+            background: var(--cream);
+            color: var(--text-muted);
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--beige-mid);
+            white-space: nowrap;
+        }
+
+        .orders-table-modern td {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--beige);
+            font-size: 13px;
+            vertical-align: middle;
+            color: var(--text-body);
+        }
+
+        .orders-table-modern tr:last-child td {
+            border-bottom: none;
+        }
+
+        .orders-table-modern tbody tr {
+            transition: background var(--t-fast);
+        }
+
+        .orders-table-modern tbody tr:hover {
+            background: rgba(248, 245, 236, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-container">
+
+        <!-- ============================================================
+         SIDEBAR
+         ============================================================ -->
+        <aside id="sidebar" role="navigation" aria-label="Sidebar Navigation">
+            <!-- Logo -->
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3C7 3 3 7 3 12C8 12 12 8 12 3Z" fill="white" opacity="0.9" />
+                        <path d="M12 3C17 3 21 7 21 12C16 12 12 8 12 3Z" fill="white" opacity="0.6" />
+                        <path d="M12 12L12 21" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="sidebar-logo-title">FreshField</div>
+                    <div class="sidebar-logo-sub">Farm to Your Table</div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="#" data-page="dashboard" class="active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" data-page="browse">
+                    <i class="fas fa-store"></i>
+                    <span>Browse Products</span>
+                </a>
+                <a href="#" data-page="categories">
+                    <i class="fas fa-th-list"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="#" data-page="orders">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>My Orders</span>
+                </a>
+                <a href="#" data-page="wishlist">
+                    <i class="far fa-heart"></i>
+                    <span>Wishlist</span>
+                    <span class="nav-badge-orange" id="wishlist-count-badge"
+                        style="display:none; margin-left:auto;">0</span>
+                </a>
+                <a href="#" onclick="cart.toggle(); return false;">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span>Cart</span>
+                    <span class="nav-badge-orange" id="cart-count-badge" style="display:none;">0</span>
+                </a>
+                <a href="#" data-page="profile">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings & Profile</span>
+                </a>
+                <a href="#" onclick="openCustomerReportFarmerModal(); return false;" style="color: #B45309;">
+                    <i class="fas fa-flag" style="color: #D97706;"></i>
+                    <span>Report a Farmer</span>
+                </a>
+            </nav>
+
+            <!-- Refer & Earn Card -->
+
+
+            <!-- Sidebar Bottom / Logout -->
+            <div class="sidebar-footer">
+                <button class="sidebar-logout" onclick="auth.handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ============================================================
+         MAIN WORKSPACE
+         ============================================================ -->
+        <div id="main-wrapper">
+
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left-greeting">
+                    <h1 class="header-greeting-txt">Welcome back, <span id="user-greeting">Customer</span> 🌿</h1>
+                    <p class="header-greeting-sub">What are you looking for today?</p>
+                </div>
+
+                <div class="header-right-actions">
+                    <!-- Language Selector in Navigation -->
+                    <div class="freshfield-lang-dropdown" title="Change Language / भाषा बदलें / ભાષા બદલો">
+                        <i class="fas fa-globe"></i>
+                        <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)" aria-label="Select Language">
+                            <option value="en">English</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="gu">ગુજરાતી</option>
+                        </select>
+                    </div>
+
+                    <!-- Location Chip -->
+                    <div class="location-chip">
+                        <i class="fas fa-map-marker-alt" style="color:var(--green-primary)"></i>
+                        <span>Rajkot, Gujarat</span>
+                        <i class="fas fa-chevron-down" style="font-size:10px; opacity:0.6;"></i>
+                    </div>
+
+                    <!-- Cart Button -->
+                    <button class="header-icon-btn" onclick="cart.toggle()" aria-label="Open cart">
+                        <i class="fas fa-shopping-basket"></i>
+                        <span class="noti-badge" id="header-cart-badge" style="display:none;">0</span>
+                    </button>
+
+                    <!-- Customer Profile Chip -->
+                    <div class="user-profile-chip" onclick="customer.showPage('profile')">
+                        <div class="user-avatar" id="header-avatar">
+                            <span>FC</span>
+                        </div>
+                        <span class="user-name-txt" id="header-user-name">Fresh Customer</span>
+
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Workspace Content -->
+            <main class="dashboard-content">
+
+                <!-- PAGE: DASHBOARD (Overview with Hero, Quick Categories, Featured Picks & Widgets) -->
+                <div id="page-dashboard" class="page-content active">
+
+                    <div class="customer-main-grid">
+
+                        <!-- Left/Center Column -->
+                        <div>
+                            <!-- Search & Trust Strip -->
+                            <div class="search-hero-box">
+                                <div class="main-search-input-wrap">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" id="search-input"
+                                        placeholder="Search for fresh vegetables, fruits, grains, and more..."
+                                        oninput="customer.handleSearch()">
+                                    <button class="btn-search-go" onclick="customer.handleSearch()"><i
+                                            class="fas fa-search"></i></button>
+                                </div>
+
+                                <div class="trust-strip">
+                                    <div class="trust-strip-item"><i class="fas fa-seedling"></i> Direct from Farmers
+                                    </div>
+                                    <div class="trust-strip-item"><i class="fas fa-leaf"></i> 100% Fresh Produce</div>
+                                    <div class="trust-strip-item"><i class="fas fa-lock"></i> Safe & Secure Payments
+                                    </div>
+                                    <div class="trust-strip-item"><i class="fas fa-truck"></i> On-time Delivery</div>
+                                </div>
+                            </div>
+
+                            <!-- Hero Promotional Banner -->
+                            <div class="customer-hero-banner">
+                                <div class="hero-banner-txt">
+                                    <h2>Eat Fresh,<br>Live Healthy</h2>
+                                    <p>Handpicked produce from local farms, delivered fresh to your doorstep.</p>
+                                    <div class="hero-banner-btns">
+                                        <a href="#" class="btn-hero-primary"
+                                            onclick="customer.showPage('browse'); return false;">Shop Now</a>
+                                        <a href="#" class="btn-hero-outline"
+                                            onclick="customer.showPage('categories'); return false;">Explore
+                                            Categories</a>
+                                    </div>
+                                </div>
+                                <div class="hero-banner-img-wrap">
+                                    <img src="assets/images/hero-produce.png" class="hero-banner-img"
+                                        alt="Fresh organic vegetables basket">
+                                </div>
+                            </div>
+
+                            <!-- Shop by Category (Quick circles) -->
+                            <div class="section-box" id="categories-list">
+                                <div class="section-box-header">
+                                    <h3 class="section-box-title">Shop by Category</h3>
+                                    <a href="#" class="section-box-link"
+                                        onclick="customer.showPage('categories'); return false;">View All</a>
+                                </div>
+
+                                <div class="categories-flex">
+                                    <div class="category-circle-item" onclick="customer.openCategory('Vegetables')">
+                                        <div class="category-circle-img"><img src="assets/images/tomatoes.png"
+                                                alt="Vegetables"></div>
+                                        <span class="category-label-txt">Vegetables</span>
+                                    </div>
+
+                                    <div class="category-circle-item" onclick="customer.openCategory('Fruits')">
+                                        <div class="category-circle-img"><img src="assets/images/hero-produce.png"
+                                                alt="Fruits"></div>
+                                        <span class="category-label-txt">Fruits</span>
+                                    </div>
+
+                                    <div class="category-circle-item" onclick="customer.openCategory('Leafy Greens')">
+                                        <div class="category-circle-img"><img src="assets/images/spinach.png"
+                                                alt="Leafy Greens"></div>
+                                        <span class="category-label-txt">Leafy Greens</span>
+                                    </div>
+
+                                    <div class="category-circle-item" onclick="customer.openCategory('Herbs')">
+                                        <div class="category-circle-img"><img src="assets/images/spinach.png"
+                                                alt="Herbs"></div>
+                                        <span class="category-label-txt">Herbs</span>
+                                    </div>
+
+                                    <div class="category-circle-item" onclick="customer.openCategory('Organic')">
+                                        <div class="category-circle-img"><img src="assets/images/carrots.png"
+                                                alt="Organic"></div>
+                                        <span class="category-label-txt">Organic</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Featured Fresh Picks -->
+                            <div class="section-box">
+                                <div class="section-box-header">
+                                    <div>
+                                        <h3 class="section-box-title">Featured Fresh Picks</h3>
+                                        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Top
+                                            handpicked seasonal produce for you</p>
+                                    </div>
+                                    <a href="#" class="section-box-link"
+                                        onclick="customer.showPage('browse'); return false;">Browse All &rarr;</a>
+                                </div>
+
+                                <div id="dashboard-product-grid" class="product-grid">
+                                    <!-- Loaded by customer.js -->
+                                </div>
+                            </div>
+
+                            <!-- Why Choose FreshField Bottom Strip -->
+                            <div class="why-freshfield-box">
+                                <div class="why-item">
+                                    <div class="why-icon"><i class="fas fa-tractor"></i></div>
+                                    <div class="why-txt"><strong>Direct from Farm</strong><span>No middlemen
+                                            markups</span></div>
+                                </div>
+                                <div class="why-item">
+                                    <div class="why-icon"><i class="fas fa-award"></i></div>
+                                    <div class="why-txt"><strong>Best Quality</strong><span>Handpicked fresh
+                                            produce</span></div>
+                                </div>
+                                <div class="why-item">
+                                    <div class="why-icon"><i class="fas fa-tags"></i></div>
+                                    <div class="why-txt"><strong>Fair Prices</strong><span>Better for you &
+                                            farmers</span></div>
+                                </div>
+                                <div class="why-item">
+                                    <div class="why-icon"><i class="fas fa-globe-asia"></i></div>
+                                    <div class="why-txt"><strong>Sustainable Choice</strong><span>Good for the
+                                            planet</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column Widgets (Matches Reference Image) -->
+                        <div class="customer-right-column">
+                            <!-- Widget 2: My Orders Status Summary -->
+                            <div class="widget-box">
+                                <div class="widget-title-row">
+                                    <span class="widget-title-txt">My Orders</span>
+                                    <a href="#" onclick="customer.showPage('orders')" class="widget-title-link">View
+                                        All</a>
+                                </div>
+
+                                <div class="order-status-list">
+                                    <div class="order-status-row">
+                                        <div class="order-status-left">
+                                            <div class="order-status-icon" style="background:#FDE8D0;color:#D97706;"><i
+                                                    class="fas fa-clock"></i></div><span>Pending</span>
+                                        </div>
+                                        <span class="order-status-count">2</span>
+                                    </div>
+
+                                    <div class="order-status-row">
+                                        <div class="order-status-left">
+                                            <div class="order-status-icon" style="background:#FDE8D0;color:#D97706;"><i
+                                                    class="fas fa-cog"></i></div><span>Processing</span>
+                                        </div>
+                                        <span class="order-status-count">3</span>
+                                    </div>
+
+                                    <div class="order-status-row">
+                                        <div class="order-status-left">
+                                            <div class="order-status-icon" style="background:#E0F2FE;color:#0284C7;"><i
+                                                    class="fas fa-truck"></i></div><span>Shipped</span>
+                                        </div>
+                                        <span class="order-status-count">1</span>
+                                    </div>
+
+                                    <div class="order-status-row">
+                                        <div class="order-status-left">
+                                            <div class="order-status-icon" style="background:#D6E4B8;color:#355C24;"><i
+                                                    class="fas fa-check"></i></div><span>Delivered</span>
+                                        </div>
+                                        <span class="order-status-count">8</span>
+                                    </div>
+
+                                    <div class="order-status-row">
+                                        <div class="order-status-left">
+                                            <div class="order-status-icon" style="background:#FEE2E2;color:#DC2626;"><i
+                                                    class="fas fa-times"></i></div><span>Cancelled</span>
+                                        </div>
+                                        <span class="order-status-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget 3: Recent Orders -->
+                            <div class="widget-box">
+                                <div class="widget-title-row">
+                                    <span class="widget-title-txt">Recent Order</span>
+                                </div>
+
+                                <div class="mini-order-item" style="cursor:pointer;"
+                                    onclick="window.location.href='product-detail.html?id=1'">
+                                    <img src="assets/images/tomatoes.png" class="mini-order-img" alt="Tomatoes">
+                                    <div class="mini-order-info">
+                                        <div class="mini-order-name">Farm Fresh Tomatoes</div>
+                                        <div class="mini-order-farm">Green Valley Farm</div>
+                                        <div class="mini-order-price">₹120.00 &bull; 2 kg</div>
+                                    </div>
+                                    <span class="status-badge-pill delivered">Delivered</span>
+                                </div>
+
+                                <div class="mini-order-item" style="cursor:pointer;"
+                                    onclick="window.location.href='product-detail.html?id=2'">
+                                    <img src="assets/images/carrots.png" class="mini-order-img" alt="Carrots">
+                                    <div class="mini-order-info">
+                                        <div class="mini-order-name">Organic Carrots</div>
+                                        <div class="mini-order-farm">Sunrise Organics</div>
+                                        <div class="mini-order-price">₹140.00 &bull; 2 kg</div>
+                                    </div>
+                                    <span class="status-badge-pill processing">Processing</span>
+                                </div>
+
+                                <div style="text-align:right; margin-top:10px;">
+                                    <a href="#" onclick="customer.showPage('orders')"
+                                        style="font-size:11.5px; font-weight:600; color:var(--text-muted);">View All
+                                        Orders &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- PAGE: BROWSE ALL PRODUCTS (Dedicated Full Marketplace View) -->
+                <div id="page-browse" class="page-content">
+                    <div class="section-box" style="margin-bottom:24px;">
+                        <div class="section-box-header" style="flex-wrap:wrap; gap:14px; margin-bottom:16px;">
+                            <div>
+                                <h2 style="font-family:var(--font-serif); font-size:24px; color:var(--text-dark);">
+                                    Browse All Farm Produce</h2>
+                                <p style="font-size:13px; color:var(--text-muted);">Explore fresh, naturally grown
+                                    produce directly from verified local farms.</p>
+                            </div>
+
+                            <div class="filters-toolbar" style="margin-left:auto;">
+                                <select id="category-filter" class="select-filter"
+                                    onchange="customer.loadBrowseProducts()">
+                                    <option value="">All Categories</option>
+                                    <option value="Vegetables">Vegetables</option>
+                                    <option value="Fruits">Fruits</option>
+                                    <option value="Leafy Greens">Leafy Greens</option>
+                                    <option value="Herbs">Herbs</option>
+                                    <option value="Organic">Organic</option>
+                                </select>
+                                <select id="sort-filter" class="select-filter" onchange="customer.loadBrowseProducts()">
+                                    <option value="newest">Newest First</option>
+                                    <option value="price-low">Price: Low to High</option>
+                                    <option value="price-high">Price: High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Category Quick Filter Pills -->
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;" id="browse-cat-pills">
+                            <button class="select-filter active"
+                                style="background:var(--green-primary); color:white; border-color:var(--green-primary);"
+                                onclick="customer.filterCategoryPill('', this)">All</button>
+                            <button class="select-filter" onclick="customer.filterCategoryPill('Vegetables', this)">🥕
+                                Vegetables</button>
+                            <button class="select-filter" onclick="customer.filterCategoryPill('Fruits', this)">🍎
+                                Fruits</button>
+                            <button class="select-filter" onclick="customer.filterCategoryPill('Leafy Greens', this)">🥬
+                                Leafy Greens</button>
+                            <button class="select-filter" onclick="customer.filterCategoryPill('Herbs', this)">🌿
+                                Herbs</button>
+                            <button class="select-filter" onclick="customer.filterCategoryPill('Organic', this)">🌱
+                                Organic</button>
+                        </div>
+
+                        <!-- Browse Products Grid -->
+                        <div id="product-grid" class="product-grid">
+                            <!-- Loaded by customer.js -->
+                        </div>
+                        <div id="product-pagination"
+                            style="display:flex; justify-content:center; gap:8px; margin-top:24px;"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE: CATEGORIES -->
+                <div id="page-categories" class="page-content">
+                    <div class="section-box-header" style="margin-bottom:20px;">
+                        <div>
+                            <h2 style="font-family:var(--font-serif); font-size:24px; color:var(--text-dark);">Produce
+                                Categories</h2>
+                            <p style="font-size:13px; color:var(--text-muted);">Explore handpicked farm categories.</p>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:18px; margin-bottom:30px;">
+                        <div class="widget-box"
+                            style="text-align:center; cursor:pointer; padding:24px 16px; transition:transform var(--t-fast);"
+                            onclick="customer.openCategory('Vegetables')">
+                            <img src="assets/images/tomatoes.png"
+                                style="width:70px; height:70px; object-fit:contain; margin:0 auto 12px;">
+                            <h3 style="font-size:16px; font-weight:700; color:var(--text-dark); margin-bottom:4px;">
+                                Vegetables</h3>
+                            <p style="font-size:12px; color:var(--text-muted);">Tomatoes, Carrots, Potatoes &amp; more
+                            </p>
+                        </div>
+
+                        <div class="widget-box"
+                            style="text-align:center; cursor:pointer; padding:24px 16px; transition:transform var(--t-fast);"
+                            onclick="customer.openCategory('Fruits')">
+                            <img src="assets/images/hero-produce.png"
+                                style="width:70px; height:70px; object-fit:contain; margin:0 auto 12px;">
+                            <h3 style="font-size:16px; font-weight:700; color:var(--text-dark); margin-bottom:4px;">
+                                Fruits</h3>
+                            <p style="font-size:12px; color:var(--text-muted);">Apples, Bananas, Citrus &amp; more</p>
+                        </div>
+
+                        <div class="widget-box"
+                            style="text-align:center; cursor:pointer; padding:24px 16px; transition:transform var(--t-fast);"
+                            onclick="customer.openCategory('Leafy Greens')">
+                            <img src="assets/images/spinach.png"
+                                style="width:70px; height:70px; object-fit:contain; margin:0 auto 12px;">
+                            <h3 style="font-size:16px; font-weight:700; color:var(--text-dark); margin-bottom:4px;">
+                                Leafy Greens</h3>
+                            <p style="font-size:12px; color:var(--text-muted);">Spinach, Kale, Lettuce &amp; more</p>
+                        </div>
+
+                        <div class="widget-box"
+                            style="text-align:center; cursor:pointer; padding:24px 16px; transition:transform var(--t-fast);"
+                            onclick="customer.openCategory('Organic')">
+                            <img src="assets/images/carrots.png"
+                                style="width:70px; height:70px; object-fit:contain; margin:0 auto 12px;">
+                            <h3 style="font-size:16px; font-weight:700; color:var(--text-dark); margin-bottom:4px;">
+                                Organic</h3>
+                            <p style="font-size:12px; color:var(--text-muted);">100% Certified Chemical-Free</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: ORDERS -->
+                <div id="page-orders" class="page-content">
+                    <!-- Page Header with Title & Quick Shop Action -->
+                    <div class="orders-page-header">
+                        <div>
+                            <div class="orders-breadcrumbs">
+                                <a href="#" onclick="customer.showPage('dashboard'); return false;">Home</a>
+                                <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+                                <span>My Orders</span>
+                            </div>
+                            <h1 class="orders-page-title">My Orders</h1>
+                            <p class="orders-page-subtitle">Track, manage and view delivery status for all your fresh
+                                farm orders.</p>
+                        </div>
+                        <div class="orders-header-actions">
+                            <button class="btn-order-action primary" onclick="customer.showPage('browse')"
+                                style="padding:10px 20px; font-size:13px;">
+                                <i class="fas fa-leaf"></i> Shop Fresh Harvest
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Orders Metric Overview Cards -->
+                    <div class="orders-summary-strip" id="orders-summary-strip">
+                        <div class="order-stat-card">
+                            <div class="order-stat-icon total"><i class="fas fa-bag-shopping"></i></div>
+                            <div>
+                                <div class="order-stat-val" id="stat-order-total">0</div>
+                                <div class="order-stat-lbl">Total Orders</div>
+                            </div>
+                        </div>
+                        <div class="order-stat-card">
+                            <div class="order-stat-icon active"><i class="fas fa-truck-fast"></i></div>
+                            <div>
+                                <div class="order-stat-val" id="stat-order-active">0</div>
+                                <div class="order-stat-lbl">Active / In-Transit</div>
+                            </div>
+                        </div>
+                        <div class="order-stat-card">
+                            <div class="order-stat-icon delivered"><i class="fas fa-circle-check"></i></div>
+                            <div>
+                                <div class="order-stat-val" id="stat-order-delivered">0</div>
+                                <div class="order-stat-lbl">Delivered</div>
+                            </div>
+                        </div>
+                        <div class="order-stat-card">
+                            <div class="order-stat-icon spent"><i class="fas fa-indian-rupee-sign"></i></div>
+                            <div>
+                                <div class="order-stat-val" id="stat-order-spent">₹0.00</div>
+                                <div class="order-stat-lbl">Total Farm Spend</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter & Search Toolbar -->
+                    <div class="orders-toolbar">
+                        <div class="orders-tabs" id="orders-filter-tabs">
+                            <button class="order-tab-btn active" data-filter="all"
+                                onclick="customer.filterOrders('all')">
+                                All Orders <span class="tab-count" id="tab-count-all">0</span>
+                            </button>
+                            <button class="order-tab-btn" data-filter="active"
+                                onclick="customer.filterOrders('active')">
+                                Active <span class="tab-count" id="tab-count-active">0</span>
+                            </button>
+                            <button class="order-tab-btn" data-filter="delivered"
+                                onclick="customer.filterOrders('delivered')">
+                                Delivered <span class="tab-count" id="tab-count-delivered">0</span>
+                            </button>
+                            <button class="order-tab-btn" data-filter="cancelled"
+                                onclick="customer.filterOrders('cancelled')">
+                                Cancelled <span class="tab-count" id="tab-count-cancelled">0</span>
+                            </button>
+                        </div>
+
+                        <div class="orders-search-view-wrap">
+                            <div class="orders-search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="orders-search-input"
+                                    placeholder="Search by Order # or produce..."
+                                    oninput="customer.handleOrderSearch(this.value)">
+                                <button id="orders-search-clear" onclick="customer.clearOrderSearch()"
+                                    style="display:none;" title="Clear search">✕</button>
+                            </div>
+                            <div class="orders-view-toggle">
+                                <button class="view-toggle-btn active" id="view-btn-cards"
+                                    onclick="customer.setOrdersView('cards')" title="Card View">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                                <button class="view-toggle-btn" id="view-btn-table"
+                                    onclick="customer.setOrdersView('table')" title="Table View">
+                                    <i class="fas fa-table-list"></i>
+                                </button>
+                            </div>
+                            <button class="btn-order-action secondary"
+                                onclick="customer.loadOrders(false); toast.info('Refreshed orders from farm registry');"
+                                style="padding:7px 14px; font-size:12px;" title="Refresh orders list">
+                                <i class="fas fa-rotate-right"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Orders Dynamic Container -->
+                    <div id="customer-orders">
+                        <div style="text-align:center; padding:50px; color:var(--text-muted);">
+                            <i class="fas fa-spinner fa-spin"
+                                style="font-size:24px; margin-bottom:10px; color:var(--green-primary); display:block;"></i>
+                            Loading your orders...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: WISHLIST -->
+                <div id="page-wishlist" class="page-content">
+                    <div class="orders-page-header" style="margin-bottom:24px;">
+                        <div>
+                            <div class="orders-breadcrumbs">
+                                <a href="#" onclick="customer.showPage('dashboard'); return false;">Home</a>
+                                <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+                                <span>My Wishlist</span>
+                            </div>
+                            <h1 class="orders-page-title">My Saved Produce</h1>
+                            <p class="orders-page-subtitle">Your curated collection of favorite organic farm produce.
+                                Easily reorder or add to cart.</p>
+                        </div>
+                        <div class="orders-header-actions">
+                            <button class="btn-order-action primary" onclick="customer.showPage('browse')"
+                                style="padding:10px 20px; font-size:13px;">
+                                <i class="fas fa-store"></i> Browse Fresh Produce
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="wishlist-grid" class="product-grid">
+                        <p style="text-align:center; padding:30px; color:var(--text-muted); grid-column:1/-1;">Loading
+                            wishlist...</p>
+                    </div>
+                </div>
+
+                <!-- PAGE: PROFILE & SETTINGS -->
+                <div id="page-profile" class="page-content">
+                    <div class="section-box-header" style="margin-bottom:20px;">
+                        <div>
+                            <h2 style="font-family:var(--font-serif); font-size:24px; color:var(--text-dark);">Account
+                                Profile & Settings</h2>
+                            <p style="font-size:13px; color:var(--text-muted);">Manage your personal details and
+                                delivery addresses.</p>
+                        </div>
+                    </div>
+
+                    <div class="widget-box" style="max-width:700px;">
+                        <form id="profile-form" onsubmit="event.preventDefault(); customer.updateProfile();">
+                            <div style="display:flex; flex-direction:column; gap:16px;">
+                                <div>
+                                    <label
+                                        style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;">Full
+                                        Name</label>
+                                    <input type="text" id="profile-name" class="main-search-input-wrap"
+                                        style="border-radius:8px; padding:10px 14px;" required>
+                                </div>
+
+                                <div>
+                                    <label
+                                        style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;">Email
+                                        Address</label>
+                                    <input type="email" id="profile-email" class="main-search-input-wrap"
+                                        style="border-radius:8px; padding:10px 14px; background:var(--cream);" readonly>
+                                </div>
+
+                                <div>
+                                    <label
+                                        style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;">Phone
+                                        Number</label>
+                                    <input type="text" id="profile-phone" class="main-search-input-wrap"
+                                        style="border-radius:8px; padding:10px 14px;">
+                                </div>
+
+                                <div>
+                                    <label
+                                        style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;">Delivery
+                                        Address</label>
+                                    <input type="text" id="profile-address" class="main-search-input-wrap"
+                                        style="border-radius:8px; padding:10px 14px;">
+                                </div>
+
+                                <div>
+                                    <label
+                                        style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;">Profile
+                                        Picture</label>
+                                    <div id="profile-upload-area"
+                                        style="border:2px dashed var(--beige-mid); padding:20px; border-radius:12px; text-align:center; cursor:pointer;">
+                                        <i class="fas fa-cloud-upload-alt"
+                                            style="font-size:24px; color:var(--green-primary);"></i>
+                                        <p style="font-size:12px; font-weight:600; margin-top:4px;">Upload Profile Image
+                                        </p>
+                                        <input type="file" id="profile-image" accept="image/*" style="display:none;">
+                                    </div>
+                                    <div id="profile-preview"></div>
+                                </div>
+
+                                <button type="submit" class="btn-hero-primary"
+                                    style="margin-top:10px; width:fit-content;">Save Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- ============================================================
+     CART SLIDE-OUT DRAWER
+     ============================================================ -->
+        <div class="cart-overlay" id="overlay" onclick="cart.close()"></div>
+
+        <div id="cart-sidebar" role="dialog" aria-label="Shopping Cart">
+            <div class="cart-drawer-head">
+                <div>
+                    <div class="cart-drawer-title">Your Basket 🛒</div>
+                    <div style="font-size:11.5px; color:var(--text-muted);">Fresh produce direct from farms</div>
+                </div>
+                <button class="cart-drawer-close" onclick="cart.close()" aria-label="Close Cart">✕</button>
+            </div>
+
+            <div id="cart-items">
+                <!-- Rendered by cart.js -->
+            </div>
+
+            <div class="cart-drawer-footer">
+                <div class="cart-drawer-total">
+                    <span class="cart-drawer-total-label">Subtotal</span>
+                    <span class="cart-drawer-total-val" id="cart-total">₹0.00</span>
+                </div>
+                <button class="btn-drawer-checkout" onclick="proceedToCheckout()">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+
+        <!-- Checkout Confirmation Modal -->
+        <div class="modal-overlay" id="checkout-modal" onclick="if(event.target===this) customer.closeCheckoutModal()">
+            <div class="modal-box" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-head">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div
+                            style="width:36px; height:36px; border-radius:10px; background:var(--green-pale); display:flex; align-items:center; justify-content:center; color:var(--green-primary); font-size:16px;">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div>
+                            <h3 class="modal-title" style="font-family:var(--font-serif); font-size:20px; margin:0;">
+                                Complete Your Order</h3>
+                            <p style="font-size:12px; color:var(--text-muted); margin:0;">Review details and select
+                                payment method</p>
+                        </div>
+                    </div>
+                    <button class="modal-close-btn" onclick="customer.closeCheckoutModal()">✕</button>
+                </div>
+
+                <form onsubmit="event.preventDefault(); customer.confirmPlaceOrder();" style="margin-top:16px;">
+                    <!-- 1. Delivery Address Section -->
+                    <div style="margin-bottom:18px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label
+                                style="font-size:13px; font-weight:700; color:var(--text-dark); display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-map-marker-alt" style="color:var(--orange);"></i> 1. Delivery Address
+                                <span style="color:#ef4444;">*</span>
+                            </label>
+                            <span style="font-size:11px; color:var(--text-muted);">Editable</span>
+                        </div>
+                        <textarea id="checkout-address" class="main-search-input-wrap"
+                            style="width:100%; border-radius:8px; padding:10px 14px; min-height:68px; resize:vertical; font-size:13px; border:1px solid var(--beige-mid);"
+                            placeholder="Enter complete flat/house, street, area, city, pincode..." required></textarea>
+
+                        <div style="margin-top:10px;">
+                            <label
+                                style="font-size:12px; font-weight:600; color:var(--text-dark); display:block; margin-bottom:4px;">Contact
+                                Phone <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="checkout-phone" class="main-search-input-wrap"
+                                style="width:100%; border-radius:8px; padding:8px 12px; font-size:13px; border:1px solid var(--beige-mid);"
+                                placeholder="10-digit mobile number" required>
+                        </div>
+                    </div>
+
+                    <!-- 2. Order Summary Section -->
+                    <div style="margin-bottom:20px;">
+                        <label
+                            style="font-size:13px; font-weight:700; color:var(--text-dark); display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                            <i class="fas fa-receipt" style="color:var(--green-primary);"></i> 2. Order Summary
+                        </label>
+                        <div id="checkout-summary"
+                            style="background:var(--cream); border:1px solid var(--beige-mid); border-radius:var(--radius-md); padding:14px; max-height:220px; overflow-y:auto;">
+                            <!-- Loaded dynamically with items list, subtotal, delivery fee, and total -->
+                        </div>
+                    </div>
+
+                    <!-- 3. Select Payment Method Section -->
+                    <div style="margin-bottom:22px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label
+                                style="font-size:13px; font-weight:700; color:var(--text-dark); display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-credit-card" style="color:var(--green-primary);"></i> 3. Select Payment
+                                Method <span style="color:#ef4444;">*</span>
+                            </label>
+                            <span id="payment-selected-hint"
+                                style="font-size:11px; color:#ef4444; font-weight:600;">Please select one</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:10px;" id="payment-methods-group">
+                            <!-- Option 1: Cash on Delivery -->
+                            <div class="payment-method-card" id="pm-card-cash_on_delivery"
+                                onclick="customer.selectPaymentMethod('cash_on_delivery')">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="pm-icon-wrap" style="background:#e0f2fe; color:#0284c7;">
+                                            <span style="font-size:20px;">💵</span>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:13.5px; font-weight:700; color:var(--text-dark);">Cash
+                                                on Delivery</div>
+                                            <div style="font-size:11.5px; color:var(--text-muted);">Pay cash when your
+                                                order is delivered.</div>
+                                        </div>
+                                    </div>
+                                    <div class="pm-radio-circle" id="pm-indicator-cash_on_delivery">
+                                        <i class="fas fa-check" style="font-size:11px; display:none;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Option 2: UPI -->
+                            <div class="payment-method-card" id="pm-card-upi"
+                                onclick="customer.selectPaymentMethod('upi')">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="pm-icon-wrap" style="background:#fef3c7; color:#d97706;">
+                                            <span style="font-size:20px;">📱</span>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:13.5px; font-weight:700; color:var(--text-dark);">UPI
+                                            </div>
+                                            <div style="font-size:11.5px; color:var(--text-muted);">Pay securely using
+                                                UPI.</div>
+                                        </div>
+                                    </div>
+                                    <div class="pm-radio-circle" id="pm-indicator-upi">
+                                        <i class="fas fa-check" style="font-size:11px; display:none;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Option 3: Credit / Debit Card -->
+                            <div class="payment-method-card" id="pm-card-card"
+                                onclick="customer.selectPaymentMethod('card')">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="pm-icon-wrap" style="background:#ede9fe; color:#7c3aed;">
+                                            <span style="font-size:20px;">💳</span>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:13.5px; font-weight:700; color:var(--text-dark);">
+                                                Credit / Debit Card</div>
+                                            <div style="font-size:11.5px; color:var(--text-muted);">Pay securely using
+                                                your card.</div>
+                                        </div>
+                                    </div>
+                                    <div class="pm-radio-circle" id="pm-indicator-card">
+                                        <i class="fas fa-check" style="font-size:11px; display:none;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button / Cancel -->
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <button type="button" class="btn-balance-details" style="flex:1;"
+                            onclick="customer.closeCheckoutModal()">Cancel</button>
+                        <button type="submit" id="btn-submit-order" class="btn-hero-primary"
+                            style="flex:2; text-align:center; padding:12px; font-size:13.5px; font-weight:700; opacity:0.6; cursor:not-allowed;"
+                            disabled>
+                            Please select a payment method
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Order Success Confirmation Modal -->
+        <div class="modal-overlay" id="order-success-modal"
+            onclick="if(event.target===this) customer.closeOrderSuccessModal()">
+            <div class="modal-box" style="max-width: 480px; text-align:center; padding:32px 24px;">
+                <div
+                    style="width:68px; height:68px; border-radius:50%; background:#dcfce7; color:#16a34a; font-size:30px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; box-shadow:0 6px 16px rgba(22,163,74,0.2);">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h3 style="font-family:var(--font-serif); font-size:22px; color:var(--text-dark); margin:0 0 6px 0;">✓
+                    Order Placed Successfully!</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin:0 0 20px 0;">Thank you! Your fresh farm
+                    produce order has been placed.</p>
+
+                <div
+                    style="background:var(--cream); border:1px solid var(--beige-mid); border-radius:var(--radius-md); padding:16px; margin-bottom:24px; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;">
+                        <span style="color:var(--text-muted);">Order ID:</span>
+                        <strong id="success-order-id"
+                            style="color:var(--text-dark); font-family:monospace; font-size:13.5px;">—</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;">
+                        <span style="color:var(--text-muted);">Order Date:</span>
+                        <span id="success-order-date"
+                            style="color:var(--text-dark); font-size:12.5px; font-weight:600;">—</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;">
+                        <span style="color:var(--text-muted);">Payment Method:</span>
+                        <strong id="success-payment-method" style="color:var(--green-primary);">—</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;">
+                        <span style="color:var(--text-muted);">Payment Status:</span>
+                        <span class="status-badge-pill pending" id="success-payment-status"
+                            style="font-size:11px; padding:2px 8px;">PENDING</span>
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; font-size:15px; font-weight:700; border-top:1px solid var(--beige-mid); padding-top:10px;">
+                        <span>Total Amount:</span>
+                        <span id="success-order-total" style="color:var(--green-dark);">—</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; flex-direction:column;">
+                    <button id="btn-success-track" class="btn-hero-primary"
+                        style="width:100%; padding:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fas fa-route"></i> Track My Order
+                    </button>
+                    <button id="btn-success-continue" class="btn-balance-details"
+                        style="width:100%; padding:10px; font-weight:600;">
+                        Continue Shopping
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details & Live Stage Tracking Modal -->
+        <div class="modal-overlay" id="order-tracking-modal"
+            onclick="if(event.target===this) customer.closeOrderTrackingModal()">
+            <div class="modal-box" style="max-width:680px;">
+                <div class="modal-head">
+                    <div>
+                        <h3 class="modal-title" id="track-order-title">Order Details</h3>
+                        <span id="track-order-date" style="font-size:12px; color:var(--text-muted);"></span>
+                    </div>
+                    <button class="modal-close-btn" onclick="customer.closeOrderTrackingModal()">✕</button>
+                </div>
+
+                <!-- Current Status Banner -->
+                <div id="track-status-banner"
+                    style="background:var(--green-pale); border-radius:var(--radius-md); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                    <div>
+                        <div
+                            style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--green-primary);">
+                            Live Order Status</div>
+                        <div id="track-current-status-text"
+                            style="font-size:16px; font-weight:700; color:var(--text-dark); margin-top:2px;">Loading
+                            status...</div>
+                    </div>
+                    <button onclick="customer.refreshCurrentTracking()" title="Refresh tracking"
+                        style="font-size:13px; color:var(--green-primary); font-weight:600; display:flex; align-items:center; gap:6px; background:white; padding:6px 12px; border-radius:20px; border:1px solid var(--green-soft);">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- 7-Stage Stepper -->
+                <div class="section-box" style="padding:16px 20px; margin-bottom:20px; background:var(--white);">
+                    <div style="font-size:13px; font-weight:700; color:var(--text-dark); margin-bottom:14px;">
+                        <i class="fas fa-route" style="color:var(--green-primary); margin-right:6px;"></i> Delivery
+                        Progression (Managed by Farmer)
+                    </div>
+                    <div id="tracking-stepper" class="tracking-stepper">
+                        <!-- 7 Stages loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Delivery & Customer Info -->
+                <div
+                    style="background:var(--cream); padding:14px 18px; border-radius:var(--radius-md); margin-bottom:20px; font-size:13px;">
+                    <div style="font-weight:700; color:var(--text-dark); margin-bottom:6px;">
+                        <i class="fas fa-map-marker-alt" style="color:var(--green-primary); margin-right:6px;"></i>
+                        Shipping Destination
+                    </div>
+                    <div id="track-shipping-address" style="color:var(--text-body); line-height:1.4;">—</div>
+                </div>
+
+                <!-- Items in Order -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-size:13px; font-weight:700; color:var(--text-dark); margin-bottom:10px;">
+                        <i class="fas fa-shopping-basket" style="color:var(--green-primary); margin-right:6px;"></i>
+                        Produce Ordered
+                    </div>
+                    <div id="track-items-list" style="display:flex; flex-direction:column; gap:8px;">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--beige); padding-top:10px; margin-top:10px; font-weight:700; font-size:15px;">
+                        <span>Total Amount Paid / Due</span>
+                        <span id="track-total-amount" style="color:var(--green-primary);">—</span>
+                    </div>
+                </div>
+
+                <!-- Tracking Timeline Notes -->
+                <div id="track-history-section">
+                    <div style="font-size:13px; font-weight:700; color:var(--text-dark); margin-bottom:8px;">
+                        <i class="fas fa-history" style="color:var(--green-primary); margin-right:6px;"></i> Status
+                        Update History
+                    </div>
+                    <div id="track-history-logs" style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
+                        <!-- Logs loaded dynamically -->
+                    </div>
+                </div>
+
+                <div style="margin-top:24px; text-align:right;">
+                    <button class="btn-balance-details" onclick="customer.closeOrderTrackingModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container" role="alert" aria-live="polite"></div>
+
+        <!-- Scripts -->
+        <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="js/toast.js?v=2.0.1"></script>
+        <script src="js/api.js?v=2.0.1"></script>
+        <script src="js/auth.js?v=2.0.1"></script>
+        <script src="js/cart.js?v=2.0.1"></script>
+        <script src="js/customer.js?v=2.0.1"></script>
+
+        <!-- Report Farmer Grievance Modal -->
+        <div id="modal-customer-report" class="modal-overlay" onclick="if(event.target===this) closeCustomerReportModal()">
+            <div class="modal-card" style="max-width: 520px; width: 100%; background: #FFFFFF; border-radius: 20px; padding: 28px; box-shadow: 0 25px 70px rgba(0,0,0,0.25); border: 1px solid var(--beige-mid);">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px;">
+                    <div>
+                        <h3 style="font-family: var(--font-serif); font-size: 22px; color: var(--text-dark); margin: 0;">
+                            <i class="fa-solid fa-flag" style="color: #D97706; margin-right: 6px;"></i> Report a Farmer
+                        </h3>
+                        <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
+                            File a complaint directly to FreshField Administration. We investigate every report thoroughly.
+                        </p>
+                    </div>
+                    <button type="button" onclick="closeCustomerReportModal()" style="background: var(--cream); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="event.preventDefault(); submitCustomerFarmerReport();">
+                    <div style="margin-bottom: 14px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                            Select Agricultural Producer (Farmer) <span style="color: #DC2626;">*</span>
+                        </label>
+                        <select id="report-farmer-select" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                            <option value="">Loading farmers list...</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                            Reason for Complaint <span style="color: #DC2626;">*</span>
+                        </label>
+                        <select id="report-reason-select" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                            <option value="Poor Quality Produce">Damaged, Spoiled or Poor Quality Produce</option>
+                            <option value="Delayed Shipment">Unreasonable Shipping / Dispatch Delay</option>
+                            <option value="Misleading Information">Inaccurate Weight, Variety or False Organic Claim</option>
+                            <option value="Fraud or Overcharging">Fraud, Missing Items, or Overcharging</option>
+                            <option value="Unprofessional Conduct">Unprofessional, Rude or Harassing Communication</option>
+                            <option value="Other">Other Grievance</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                            Order Number (Optional)
+                        </label>
+                        <input type="text" id="report-order-input" placeholder="e.g. ORD-179023..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                            Detailed Description of the Issue <span style="color: #DC2626;">*</span>
+                        </label>
+                        <textarea id="report-description-input" required rows="4" placeholder="Please provide specific details about what happened..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" onclick="closeCustomerReportModal()" style="background: transparent; border: 1px solid var(--beige-mid); padding: 9px 18px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer;">Cancel</button>
+                        <button type="submit" id="btn-submit-customer-report" style="background: #D97706; color: white; border: none; padding: 9px 24px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Grievance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Customer Reporting Helpers
+            async function openCustomerReportFarmerModal(prefillFarmerId = null, prefillFarmerName = '', orderNumber = '') {
+                const modal = document.getElementById('modal-customer-report');
+                const select = document.getElementById('report-farmer-select');
+                if (modal) modal.classList.add('open');
+
+                if (orderNumber) {
+                    const ordInput = document.getElementById('report-order-input');
+                    if (ordInput) ordInput.value = orderNumber;
+                }
+
+                // Load farmers
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch('http://localhost:5000/api/admin/farmers-list', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data.success && data.farmers) {
+                        select.innerHTML = '<option value="">Choose farmer...</option>' + 
+                            data.farmers.map(f => `
+                                <option value="${f.id}" ${prefillFarmerId == f.id ? 'selected' : ''}>
+                                    ${f.name} ${f.farm_name ? `(${f.farm_name})` : ''} - ${f.farm_location || 'India'}
+                                </option>
+                            `).join('');
+                    }
+                } catch(e) {
+                    console.error('Error fetching farmers:', e);
+                }
+            }
+
+            function closeCustomerReportModal() {
+                const modal = document.getElementById('modal-customer-report');
+                if (modal) modal.classList.remove('open');
+            }
+
+            async function submitCustomerFarmerReport() {
+                const farmerId = document.getElementById('report-farmer-select').value;
+                const reason = document.getElementById('report-reason-select').value;
+                const orderNumber = document.getElementById('report-order-input').value.trim();
+                const description = document.getElementById('report-description-input').value.trim();
+                const btn = document.getElementById('btn-submit-customer-report');
+
+                if (!farmerId || !reason || !description) {
+                    toast.error('Please complete all required fields.');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Submitting...`;
+
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch('http://localhost:5000/api/admin/report-farmer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            farmer_id: farmerId,
+                            reason,
+                            description
+                        })
+                    });
+
+                    const data = await res.json();
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Grievance`;
+
+                    if (data.success) {
+                        closeCustomerReportModal();
+                        document.getElementById('report-description-input').value = '';
+                        document.getElementById('report-order-input').value = '';
+                        toast.success('Your report has been received by FreshField Administration. We will review it shortly.', 'Report Submitted');
+                    } else {
+                        toast.error(data.message || 'Failed to submit report.');
+                    }
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Grievance`;
+                    toast.error('Unable to reach server. Please check your connection.');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!auth.isAuthenticated()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                customer.init();
+            });
+        </script>
+        <script src="js/i18n.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,146 @@
+<mxfile host="app.diagrams.net" modified="2026-08-22T04:30:00.000Z" agent="FreshField" version="21.0.0" type="device">
+  <diagram id="customer-dfd-clean" name="Customer Data Flow Diagram">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="980" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Top Header Title -->
+        <mxCell id="title_banner" value="FreshField — Customer Data Flow Diagram (DFD)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=none;fontColor=#FFFFFF;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1320" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- SINGLE EXTERNAL ENTITY: CUSTOMER (Left Side)                 -->
+        <!-- ============================================================ -->
+        <mxCell id="entity_customer" value="&lt;b style=&quot;font-size:16px;&quot;&gt;CUSTOMER&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;&quot;&gt;(Buyer / End User)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontColor=#1B5E20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="160" height="780" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 1.0: LOGIN & REGISTRATION                            -->
+        <!-- ============================================================ -->
+        <mxCell id="p1" value="&lt;b&gt;1.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Register &amp; Login&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="110" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="D1: Users Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="125" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 1.0 -->
+        <mxCell id="arr_c_p1" value="Enters Name, Email &amp; Password" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.06;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p1_c" value="Returns Auth Token &amp; User Profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.09;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p1" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p1_d1" value="Verify / Save Customer Data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p1" target="d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 2.0: BROWSE PRODUCE & CATEGORIES                     -->
+        <!-- ============================================================ -->
+        <mxCell id="p2" value="&lt;b&gt;2.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Browse &amp; Search&lt;br&gt;Produce&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="D2: Products Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="265" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 2.0 -->
+        <mxCell id="arr_c_p2" value="Searches Produce or Filters Category" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.23;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p2_c" value="Displays Fresh Produce &amp; Prices" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.26;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p2" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p2_d2" value="Fetch Active Products &amp; Stock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p2" target="d2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 3.0: MANAGE CART & WISHLIST                          -->
+        <!-- ============================================================ -->
+        <mxCell id="p3" value="&lt;b&gt;3.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Manage Cart &amp;&lt;br&gt;Wishlist&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="390" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" value="D3: Wishlist &amp; Cart Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="405" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 3.0 -->
+        <mxCell id="arr_c_p3" value="Adds Produce to Cart or Wishlist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.40;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p3_c" value="Updates Cart Drawer &amp; Item Count" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.43;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p3" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p3_d3" value="Save / Remove Wishlist Items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p3" target="d3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 4.0: CHECKOUT & PLACE ORDER                          -->
+        <!-- ============================================================ -->
+        <mxCell id="p4" value="&lt;b&gt;4.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Checkout &amp;&lt;br&gt;Place Order&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="530" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" value="D4: Orders Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="545" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 4.0 -->
+        <mxCell id="arr_c_p4" value="Submits Delivery Address &amp; Order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.57;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p4_c" value="Generates Order Confirmation &amp; Total" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.60;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p4" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p4_d4" value="Store Order &amp; Decrement Product Stock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p4" target="d4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 5.0: VIEW ORDERS & TRACK STATUS                      -->
+        <!-- ============================================================ -->
+        <mxCell id="p5" value="&lt;b&gt;5.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;View Orders &amp;&lt;br&gt;Track Delivery&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="670" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 5.0 -->
+        <mxCell id="arr_c_p5" value="Requests Order History" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.74;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p5_c" value="Shows Status (Pending, Shipped, Delivered)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.77;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p5" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p5_d4" value="Fetch Customer Orders by User ID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p5" target="d4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 6.0: SUBMIT REVIEWS & RATINGS                        -->
+        <!-- ============================================================ -->
+        <mxCell id="p6" value="&lt;b&gt;6.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Submit Reviews&lt;br&gt;&amp; Feedback&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="810" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d5" value="D5: Reviews Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="825" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 6.0 -->
+        <mxCell id="arr_c_p6" value="Submits Rating (1-5★) &amp; Review" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.91;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=2;fontColor=#2E7D32;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_customer" target="p6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p6_c" value="Displays Product Reviews &amp; Average Rating" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.94;entryDx=0;entryDy=0;strokeColor=#E65100;strokeWidth=2;dashed=1;fontColor=#E65100;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p6" target="entity_customer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p6_d5" value="Save / Read Customer Reviews" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p6" target="d5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

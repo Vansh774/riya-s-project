@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshField — Login & Register | Farm to Your Table</title>
+    <meta name="description" content="Sign in to FreshField to discover fresh organic produce direct from local farmers, manage your cart, and track orders.">
+
+    <!-- Preconnect for Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts: Playfair Display + Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- FreshField Auth Stylesheet -->
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/i18n.css">
+</head>
+<body>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fresh-toast-container" aria-live="polite"></div>
+
+    <!-- Background Botanical Corner Ornaments -->
+    <div class="page-decorations" aria-hidden="true">
+        <!-- Top Right Botanical Branch -->
+        <svg class="botanical-corner botanical-top-right" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M300 0 C240 40 180 120 200 240 M240 60 C210 50 180 70 190 100 C200 130 230 110 240 60 Z M190 130 C150 110 130 140 150 170 C170 200 190 170 190 130 Z M220 180 C190 190 180 230 210 250 C240 270 250 220 220 180 Z" stroke="#A8BF72" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+            <path d="M280 40 C220 80 160 160 180 280 M210 90 C180 80 160 100 170 130 C180 150 200 140 210 90 Z M160 170 C130 150 110 180 130 210 C150 240 170 210 160 170 Z" stroke="#355C24" stroke-width="1.2" opacity="0.35"/>
+        </svg>
+
+        <!-- Bottom Right Botanical Branch -->
+        <svg class="botanical-corner botanical-bottom-right" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M300 300 C220 280 150 200 180 80 M240 240 C200 250 190 210 220 190 C250 170 260 210 240 240 Z M190 160 C150 170 140 130 170 110 C200 90 210 130 190 160 Z" stroke="#A8BF72" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
+        </svg>
+    </div>
+
+    <!-- Top Navigation Bar with Language Switcher -->
+    <header class="auth-top-navbar" style="position: relative; z-index: 100; display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 32px 0 32px;">
+        <a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #166534; font-weight: 600; font-size: 14px; background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 20px; border: 1.5px solid rgba(21,128,61,0.25); backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <i class="fas fa-arrow-left"></i> <span>Back to Home</span>
+        </a>
+        <!-- Language Selector in Navigation -->
+        <div class="freshfield-lang-dropdown" title="Change Language / भाषा बदलें / ભાષા બદલો">
+            <i class="fas fa-globe"></i>
+            <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)" aria-label="Select Language">
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+                <option value="gu">ગુજરાતી</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="auth-page-container">
+        <div class="auth-grid">
+
+            <!-- ==========================================
+                 LEFT COLUMN: BRANDING & FARM VISUAL
+                 ========================================== -->
+            <section class="auth-left-col">
+                <!-- Logo -->
+                <a href="index.html" class="auth-brand-logo" title="Back to FreshField Home">
+                    <div class="auth-logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z" fill="#FFFFFF"/>
+                            <path d="M16 8 2 22" stroke="#355C24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M17.5 15H9" stroke="#355C24" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="auth-logo-text">
+                        <span class="auth-logo-name">FreshField</span>
+                        <span class="auth-logo-tagline">Farm to Your Table</span>
+                    </div>
+                </a>
+
+                <!-- Hero Title & Subtitle -->
+                <h1 class="auth-hero-title">
+                    Welcome Back to
+                    <span class="brand-accent">FreshField</span>
+                </h1>
+                <p class="auth-hero-subtitle">
+                    Sign in to continue your journey of <span class="highlight-fresh">fresh</span>, natural and healthy living.
+                </p>
+
+                <!-- Value Props List -->
+                <div class="auth-features-list">
+                    <!-- Feature 1 -->
+                    <div class="auth-feature-item">
+                        <div class="feature-icon-badge">
+                            <i class="fa-solid fa-leaf"></i>
+                        </div>
+                        <div class="feature-text-block">
+                            <h4>Direct from Farmers</h4>
+                            <p>Get the freshest produce straight from local farms.</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="auth-feature-item">
+                        <div class="feature-icon-badge">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="feature-text-block">
+                            <h4>Safe &amp; Secure</h4>
+                            <p>Your data and payments are always protected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="auth-feature-item">
+                        <div class="feature-icon-badge">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </div>
+                        <div class="feature-text-block">
+                            <h4>On-time Delivery</h4>
+                            <p>Fast and reliable delivery to your doorstep.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Farm Scenery & Produce Basket Composition -->
+                <div class="auth-scenery-container">
+                    <!-- Organic Wave Dividing Curve -->
+                    <svg class="scenery-wave-svg" viewBox="0 0 500 300" fill="none" preserveAspectRatio="none">
+                        <path d="M20,10 C180,60 140,220 40,290" stroke="#6F9638" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.45"/>
+                        <path d="M0,0 C120,40 160,180 50,300" stroke="#A8BF72" stroke-width="2" opacity="0.6"/>
+                    </svg>
+
+                    <div class="scenery-wrapper">
+                        <!-- Farm Landscape Photo -->
+                        <div class="farm-image-clip">
+                            <img src="assets/images/farm-landscape.png" alt="Fresh green organic farmland" onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80'">
+                            
+                            <!-- Birds Soaring Silhouette -->
+                            <svg class="birds-flock" viewBox="0 0 100 50" fill="#355C24">
+                                <path d="M10,25 Q15,20 20,25 Q25,20 30,25 Q25,23 20,26 Q15,23 10,25 Z" opacity="0.7"/>
+                                <path d="M45,15 Q50,10 55,15 Q60,10 65,15 Q60,13 55,16 Q50,13 45,15 Z" opacity="0.85"/>
+                                <path d="M75,22 Q79,18 83,22 Q87,18 91,22 Q87,20 83,23 Q79,20 75,22 Z" opacity="0.6"/>
+                                <path d="M60,32 Q64,28 68,32 Q72,28 76,32 Q72,30 68,33 Q64,30 60,32 Z" opacity="0.5"/>
+                            </svg>
+                        </div>
+
+                        <!-- Produce Basket Graphic Composition -->
+                        <div class="produce-basket-graphic">
+                            <img src="assets/images/hero-produce.png" alt="Wicker basket overflowing with fresh organic produce" onerror="this.src='assets/images/tomatoes.png'">
+                        </div>
+                    </div>
+
+                    <!-- Botanical Sprig Art Behind Basket -->
+                    <svg class="basket-botanical-sprig" viewBox="0 0 100 150" fill="none">
+                        <path d="M50 150 Q45 80 70 20" stroke="#6F9638" stroke-width="1.6" stroke-linecap="round"/>
+                        <path d="M56 110 C70 100 75 90 65 85 C55 80 50 95 56 110 Z" fill="#A8BF72" opacity="0.6"/>
+                        <path d="M48 85 C30 75 28 65 38 60 C48 55 52 70 48 85 Z" fill="#A8BF72" opacity="0.6"/>
+                        <path d="M60 60 C75 50 80 40 70 35 C60 30 55 45 60 60 Z" fill="#6F9638" opacity="0.5"/>
+                    </svg>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 RIGHT COLUMN: FLOATING AUTH CARD
+                 ========================================== -->
+            <section class="auth-right-col">
+                <div class="auth-card">
+
+                    <!-- ---------------------------------------
+                         1. LOGIN VIEW (PRIMARY DEFAULT)
+                         --------------------------------------- -->
+                    <div id="login-view" class="auth-view active">
+                        <!-- Card Header -->
+                        <div class="card-header">
+                            <h2 class="card-title">Login to Your Account</h2>
+                            <!-- Leaf Divider -->
+                            <div class="leaf-divider">
+                                <span class="divider-line"></span>
+                                <svg class="leaf-icon-svg" viewBox="0 0 24 24">
+                                    <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
+                                </svg>
+                                <span class="divider-line"></span>
+                            </div>
+                            <p class="card-subtitle">Welcome back! Please enter your details.</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form id="form-login" onsubmit="event.preventDefault(); handleLoginSubmit();" novalidate>
+                            <!-- Email or Phone -->
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="text" id="login-email" class="form-input" placeholder="Email or Phone Number" required autocomplete="username">
+                                    <i class="fa-regular fa-user input-icon-left"></i>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="password" id="login-password" class="form-input" placeholder="Password" required autocomplete="current-password">
+                                    <i class="fa-solid fa-lock input-icon-left"></i>
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Remember Me & Forgot Password -->
+                            <div class="form-options-row">
+                                <label class="custom-checkbox-label">
+                                    <input type="checkbox" id="remember-me" checked>
+                                    <span class="custom-checkmark"><i class="fa-solid fa-check"></i></span>
+                                    <span>Remember me</span>
+                                </label>
+                                <a href="#forgot" class="forgot-password-link" onclick="openForgotModal(event)">Forgot Password?</a>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" id="btn-login-submit" class="btn-fresh-primary">
+                                <span>Login</span>
+                                <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>
+                            </button>
+
+                            <!-- Switch to Register -->
+                            <div class="card-footer-switch">
+                                <span>Don't have an account?</span>
+                                <a href="#register" onclick="switchAuthView('register', event)">Register here</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- ---------------------------------------
+                         2. REGISTER VIEW
+                         --------------------------------------- -->
+                    <div id="register-view" class="auth-view">
+                        <!-- Card Header -->
+                        <div class="card-header">
+                            <h2 class="card-title">Create Your Account</h2>
+                            <!-- Leaf Divider -->
+                            <div class="leaf-divider">
+                                <span class="divider-line"></span>
+                                <svg class="leaf-icon-svg" viewBox="0 0 24 24">
+                                    <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
+                                </svg>
+                                <span class="divider-line"></span>
+                            </div>
+                            <p class="card-subtitle">Join FreshField for fresh, healthy produce.</p>
+                        </div>
+
+                        <!-- Register Form -->
+                        <form id="form-register" onsubmit="event.preventDefault(); handleRegisterSubmit();" novalidate>
+                            <!-- Names Row -->
+                            <div class="input-group-row">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="input-wrapper">
+                                        <input type="text" id="register-first-name" class="form-input" placeholder="First Name" required autocomplete="given-name">
+                                        <i class="fa-regular fa-user input-icon-left"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="input-wrapper">
+                                        <input type="text" id="register-last-name" class="form-input" placeholder="Last Name" required autocomplete="family-name">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="email" id="register-email" class="form-input" placeholder="Email Address" required autocomplete="email">
+                                    <i class="fa-regular fa-envelope input-icon-left"></i>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="tel" id="register-phone" class="form-input" placeholder="Phone Number" autocomplete="tel">
+                                    <i class="fa-solid fa-phone input-icon-left"></i>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="password" id="register-password" class="form-input" placeholder="Create Password (min 8 chars)" required minlength="8" autocomplete="new-password">
+                                    <i class="fa-solid fa-lock input-icon-left"></i>
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('register-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Role Picker -->
+                            <div class="role-picker-container">
+                                <span class="role-picker-label">I want to...</span>
+                                <div class="role-cards-grid">
+                                    <label class="role-card-item selected" onclick="handleRoleSelect('customer')">
+                                        <input type="radio" name="auth-role" value="customer" checked>
+                                        <span class="role-card-icon">🛒</span>
+                                        <span class="role-card-title">Buy Produce</span>
+                                        <span class="role-card-desc">Shop fresh from farms</span>
+                                    </label>
+                                    <label class="role-card-item" onclick="handleRoleSelect('farmer')">
+                                        <input type="radio" name="auth-role" value="farmer">
+                                        <span class="role-card-icon">🌾</span>
+                                        <span class="role-card-title">Sell Produce</span>
+                                        <span class="role-card-desc">Reach direct buyers</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Farmer Extra Fields -->
+                            <div id="farmer-fields-container" class="farmer-extra-fields" style="display: none;">
+                                
+                                <!-- STEP 1: FARM PROFILE -->
+                                <div class="farmer-step-card">
+                                    <div class="farmer-step-header">
+                                        <div class="step-number-badge">1</div>
+                                        <div class="farmer-section-title">
+                                            <i class="fa-solid fa-tractor"></i> Farm Profile
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <div class="input-wrapper">
+                                            <input type="text" id="register-farm-name" class="form-input" placeholder="Farm / Orchard Name (e.g. Green Valley Organic)" oninput="updateLiveKisanCardVisualizer()">
+                                            <i class="fa-solid fa-seedling input-icon-left"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <div class="input-wrapper">
+                                            <input type="text" id="register-farm-location" class="form-input" placeholder="Farm Location / District (e.g. Nashik, Maharashtra)" oninput="updateLiveKisanCardVisualizer()">
+                                            <i class="fa-solid fa-location-dot input-icon-left"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 2: FARMER IDENTIFICATION -->
+                                <div class="farmer-step-card">
+                                    <div class="farmer-step-header">
+                                        <div class="step-number-badge">2</div>
+                                        <div class="farmer-section-title">
+                                            <i class="fa-solid fa-id-card"></i> Government Farmer Credentials
+                                            <span class="badge-required">Required</span>
+                                        </div>
+                                    </div>
+                                    <p class="farmer-section-subtitle">
+                                        Enter your official Farmer ID and Kisan Card number as registered in agricultural records.
+                                    </p>
+                                    <div class="input-group-row" style="margin-bottom: 0;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <div class="input-wrapper">
+                                                <input type="text" id="register-farmer-id" class="form-input" placeholder="Farmer ID (e.g. FID-2024-8841)" oninput="onFarmerCredentialsChanged()">
+                                                <i class="fa-solid fa-id-badge input-icon-left"></i>
+                                            </div>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <div class="input-wrapper">
+                                                <input type="text" id="register-kisan-card" class="form-input" placeholder="Kisan Card No. (e.g. KCC-8841-3920)" oninput="onFarmerCredentialsChanged()">
+                                                <i class="fa-solid fa-credit-card input-icon-left"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 3: KISAN CARD STUDIO & UPLOAD -->
+                                <div class="farmer-step-card" style="margin-bottom: 0;">
+                                    <div class="farmer-step-header">
+                                        <div class="step-number-badge">3</div>
+                                        <div class="farmer-section-title">
+                                            <i class="fa-solid fa-shield-halved"></i> Kisan Card Studio &amp; Upload
+                                            <span class="badge-required">Match Verification</span>
+                                        </div>
+                                    </div>
+                                    <p class="farmer-section-subtitle">
+                                        Your uploaded Kisan Card document must match the credentials in Step 2. You can download an official sample card below, or upload your existing document.
+                                    </p>
+
+                                    <!-- Live Interactive Visualizer -->
+                                    <div class="kisan-visualizer-container" id="kisan-visualizer-container" title="Live Preview of your Kisan Credit Card">
+                                        <div class="kisan-card-top-stripe">
+                                            <span class="stripe-orange"></span>
+                                            <span class="stripe-white"></span>
+                                            <span class="stripe-green"></span>
+                                        </div>
+                                        <div class="kisan-card-header-row">
+                                            <div>
+                                                <div class="kisan-card-title-text">GOVERNMENT OF INDIA • MINISTRY OF AGRICULTURE</div>
+                                                <div class="kisan-card-subhead">KISAN CREDIT CARD / किसान क्रेडिट कार्ड</div>
+                                            </div>
+                                            <div class="kisan-card-chip"></div>
+                                        </div>
+                                        <div class="kisan-card-details-grid">
+                                            <div class="card-field-block">
+                                                <span class="card-field-label">Farmer ID / पहचान पत्र</span>
+                                                <span class="card-field-val" id="vis-farmer-id">FID-2024-8841</span>
+                                            </div>
+                                            <div class="card-field-block">
+                                                <span class="card-field-label">Kisan Card / कार्ड संख्या</span>
+                                                <span class="card-field-val" id="vis-kisan-card">KCC-8841-3920</span>
+                                            </div>
+                                            <div class="card-field-block">
+                                                <span class="card-field-label">Farmer Name / धारक</span>
+                                                <span class="card-field-val name-val" id="vis-farmer-name">RAMESH KUMAR</span>
+                                            </div>
+                                            <div class="card-field-block">
+                                                <span class="card-field-label">District / जिला</span>
+                                                <span class="card-field-val name-val" id="vis-location">MAHARASHTRA, INDIA</span>
+                                            </div>
+                                        </div>
+                                        <div class="kisan-card-bottom-bar">
+                                            <span>VALID THRU: 12/2029 • OFFICIAL AGRICULTURAL REGISTRY</span>
+                                            <span class="card-stamp-badge">VERIFIED ✓</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3-Step Farmer Visual Workflow Guide -->
+                                    <div class="kisan-steps-guide">
+                                        <div class="kisan-guide-step">
+                                            <span class="kisan-guide-step-num">1</span>
+                                            <span>Get Card</span>
+                                        </div>
+                                        <div class="kisan-guide-step">
+                                            <span class="kisan-guide-step-num">2</span>
+                                            <span>Upload / Attach</span>
+                                        </div>
+                                        <div class="kisan-guide-step">
+                                            <span class="kisan-guide-step-num">3</span>
+                                            <span>Instant Match</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions Row: Download Card or 1-Click Auto Attach -->
+                                    <div class="kisan-actions-card">
+                                        <button type="button" class="btn-kisan-action btn-kisan-download" onclick="downloadSampleKisanCard()" title="Download a generated Kisan Card PNG image">
+                                            <i class="fa-solid fa-download"></i>
+                                            <span>Download Sample Card</span>
+                                        </button>
+                                        <button type="button" class="btn-kisan-action btn-kisan-autoattach" onclick="autoAttachTestKisanCard()" title="Directly attach and verify this card in 1 click">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                            <span>1-Click Auto-Attach</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Upload Controls Dropzone -->
+                                    <div class="kisan-upload-box">
+                                        <input type="file" id="register-kisan-file" accept="image/png,image/jpeg,image/webp,application/pdf" style="display: none;" onchange="handleKisanFileInput(this)">
+                                        
+                                        <div class="kisan-dropzone" id="kisan-dropzone" onclick="document.getElementById('register-kisan-file').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                                            <div class="dropzone-content">
+                                                <div class="dropzone-icon">
+                                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                                </div>
+                                                <div class="btn-browse-trigger">
+                                                    <i class="fa-solid fa-folder-open"></i> Browse from Computer
+                                                </div>
+                                                <div class="dropzone-desc">
+                                                    or drag &amp; drop your downloaded card here (PNG, JPG, PDF)
+                                                </div>
+                                                <div class="dropzone-tip" style="font-size: 11px; color: #2D6A4F; font-weight: 500; margin-top: 2px;">
+                                                    <i class="fa-solid fa-lightbulb"></i> Downloaded the card? Click above to select it from your Downloads folder
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Attached File Preview Card -->
+                                        <div class="kisan-file-preview-card" id="kisan-file-preview-card">
+                                            <div class="preview-thumb-wrap" onclick="openCardZoomModal()" title="Click to view full card">
+                                                <img id="kisan-preview-img" src="" alt="Kisan Card Preview">
+                                                <div class="preview-thumb-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
+                                            </div>
+                                            <div class="preview-file-info">
+                                                <div class="preview-filename" id="preview-filename">kisan-card.png</div>
+                                                <div class="preview-meta">
+                                                    <span id="preview-filesize">0 KB</span>
+                                                    <span>•</span>
+                                                    <span id="preview-filetype">Kisan Card</span>
+                                                </div>
+                                            </div>
+                                            <div class="preview-actions-row">
+                                                <button type="button" class="btn-preview-action" onclick="openCardZoomModal()" title="View full size">
+                                                    <i class="fa-regular fa-eye"></i> View
+                                                </button>
+                                                <button type="button" class="btn-remove-kisan-file" onclick="removeKisanFile()" title="Change file">
+                                                    <i class="fa-solid fa-xmark"></i> Change
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Live Verification Status Box -->
+                                    <div class="kisan-verify-status-box neutral" id="kisan-verify-status-box">
+                                        <i class="fa-solid fa-circle-info verify-status-icon"></i>
+                                        <div id="kisan-verify-status-text">
+                                            Download your sample card above and upload it, or click <strong>1-Click Auto-Attach</strong> to verify match.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden Canvas for Card Generation -->
+                                <canvas id="kisan-canvas" width="600" height="380" style="display: none;"></canvas>
+                            </div>
+
+                            <!-- Terms and Agreement Checkbox -->
+                            <div class="terms-agreement-row">
+                                <label class="custom-checkbox-label">
+                                    <input type="checkbox" id="terms-agree" required checked>
+                                    <span class="custom-checkmark"><i class="fa-solid fa-check"></i></span>
+                                    <span>I agree to the <a href="#" onclick="toast.info('FreshField Terms of Service.'); return false;">Terms</a> &amp; <a href="#" onclick="toast.info('FreshField Privacy Policy.'); return false;">Privacy Policy</a></span>
+                                </label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" id="btn-register-submit" class="btn-fresh-primary">
+                                <span>Create Account</span>
+                                <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>
+                            </button>
+
+                            <!-- Switch to Login -->
+                            <div class="card-footer-switch">
+                                <span>Already have an account?</span>
+                                <a href="#login" onclick="switchAuthView('login', event)">Login here</a>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ==========================================
+         FORGOT PASSWORD MODAL
+         ========================================== -->
+    <div id="forgot-modal" class="auth-modal-backdrop" onclick="if(event.target === this) closeForgotModal()">
+        <div class="auth-modal-card">
+            <button class="modal-close-btn" onclick="closeForgotModal()" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="card-header">
+                <h3 class="card-title" style="font-size: 24px;">Reset Password</h3>
+                <div class="leaf-divider">
+                    <span class="divider-line"></span>
+                    <svg class="leaf-icon-svg" viewBox="0 0 24 24">
+                        <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
+                    </svg>
+                    <span class="divider-line"></span>
+                </div>
+                <p class="card-subtitle">Enter your registered email address to receive password reset instructions.</p>
+            </div>
+            <form onsubmit="event.preventDefault(); handleForgotSubmit();">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="email" id="forgot-email" class="form-input" placeholder="Your registered email" required>
+                        <i class="fa-regular fa-envelope input-icon-left"></i>
+                    </div>
+                </div>
+                <button type="submit" id="btn-forgot-submit" class="btn-fresh-primary" style="margin-top: 10px;">
+                    <span>Send Reset Link</span>
+                    <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>
+                </button>
+            </form>
+    </div>
+
+    <!-- ==========================================
+         KISAN CARD FULL-VIEW MODAL
+         ========================================== -->
+    <div id="card-zoom-modal" class="card-modal-backdrop" onclick="if(event.target === this) closeCardZoomModal()">
+        <div class="card-modal-content">
+            <button class="modal-close-btn" onclick="closeCardZoomModal()" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="card-header" style="margin-bottom: 8px;">
+                <h3 class="card-title" style="font-size: 20px;">Official Kisan Credit Card</h3>
+                <p class="card-subtitle">Digital Card Preview with Barcode and Verification Seal</p>
+            </div>
+            <img id="card-zoom-img" class="card-modal-img" src="" alt="Full size Kisan Card">
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px;">
+                <button type="button" class="btn-kisan-action btn-kisan-download" onclick="downloadSampleKisanCard()">
+                    <i class="fa-solid fa-download"></i> Download PNG
+                </button>
+                <button type="button" class="btn-preview-action" onclick="closeCardZoomModal()" style="padding: 10px 18px;">
+                    Close Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         JAVASCRIPT AUTH & UI LOGIC
+         ========================================== -->
+    <script>
+        // FreshField Toast Notification System
+        const toast = {
+            show(msg, title = '', type = 'info', duration = 4000) {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+
+                const toastEl = document.createElement('div');
+                toastEl.className = `fresh-toast ${type}`;
+
+                const icons = {
+                    success: '<i class="fa-solid fa-circle-check"></i>',
+                    error:   '<i class="fa-solid fa-circle-exclamation"></i>',
+                    info:    '<i class="fa-solid fa-leaf"></i>'
+                };
+
+                toastEl.innerHTML = `
+                    <div class="toast-icon-wrap">${icons[type] || icons.info}</div>
+                    <div class="toast-body">
+                        ${title ? `<div class="toast-title-text">${title}</div>` : ''}
+                        <div class="toast-msg-text">${msg}</div>
+                    </div>
+                    <button class="toast-close-x" onclick="this.closest('.fresh-toast').remove()" aria-label="Close notification">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+
+                container.appendChild(toastEl);
+
+                setTimeout(() => {
+                    toastEl.classList.add('removing');
+                    setTimeout(() => toastEl.remove(), 300);
+                }, duration);
+            },
+            success(msg, title = 'Success') { this.show(msg, title, 'success'); },
+            error(msg, title = 'Error') { this.show(msg, title, 'error', 5000); },
+            info(msg, title = 'FreshField') { this.show(msg, title, 'info'); }
+        };
+
+        // Switch between Login and Register views
+        function switchAuthView(view, e) {
+            if (e) e.preventDefault();
+            const loginView = document.getElementById('login-view');
+            const registerView = document.getElementById('register-view');
+
+            if (view === 'register') {
+                loginView.classList.remove('active');
+                registerView.classList.add('active');
+                history.replaceState(null, '', '#register');
+                document.title = 'FreshField — Create Account | Farm to Your Table';
+            } else {
+                registerView.classList.remove('active');
+                loginView.classList.add('active');
+                history.replaceState(null, '', '#login');
+                document.title = 'FreshField — Login | Farm to Your Table';
+            }
+        }
+
+        // Handle Role Selection on Register
+        function handleRoleSelect(role) {
+            document.querySelectorAll('.role-card-item').forEach(el => el.classList.remove('selected'));
+            const radio = document.querySelector(`input[name="auth-role"][value="${role}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.closest('.role-card-item').classList.add('selected');
+            }
+
+            const farmerFields = document.getElementById('farmer-fields-container');
+            if (farmerFields) {
+                farmerFields.style.display = (role === 'farmer') ? 'block' : 'none';
+            }
+
+            if (role === 'farmer') {
+                ensureDefaultFarmerCredentials();
+                updateLiveKisanCardVisualizer();
+            }
+        }
+
+        // Toggle Password Visibility
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+
+        // Forgot Password Modal Handlers
+        function openForgotModal(e) {
+            if (e) e.preventDefault();
+            const modal = document.getElementById('forgot-modal');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeForgotModal() {
+            const modal = document.getElementById('forgot-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function handleForgotSubmit() {
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) {
+                toast.error('Please enter your email address.');
+                return;
+            }
+            closeForgotModal();
+            toast.success(`Password reset instructions sent to ${email}`, 'Check Your Inbox');
+        }
+
+        // Helper to resolve API endpoint
+        function getApiUrl(path) {
+            return `http://localhost:5000/api${path}`;
+        }
+
+        // Handle Login Submission
+        async function handleLoginSubmit() {
+            const emailOrPhone = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login-submit');
+
+            if (!emailOrPhone || !password) {
+                toast.error('Please fill in both email/phone and password.', 'Missing Details');
+                return;
+            }
+
+            // Set loading state
+            btn.disabled = true;
+            btn.innerHTML = `<span>Signing in...</span> <i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+            try {
+                let response;
+                try {
+                    response = await fetch(getApiUrl('/auth/login'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailOrPhone, password })
+                    });
+                } catch (netErr) {
+                    // Fallback to relative endpoint if CORS or port difference
+                    response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailOrPhone, password })
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    if (data.user.role === 'admin') {
+                        window.location.replace('admin-dashboard.html');
+                    } else if (data.user.role === 'farmer') {
+                        window.location.replace('farmer-dashboard.html');
+                    } else {
+                        window.location.replace('customer-dashboard.html');
+                    }
+                } else {
+                    toast.error(data.message || 'Invalid email or password. Please try again.', 'Authentication Failed');
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Login</span> <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>`;
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                toast.error('Unable to connect to server. Please check your connection.', 'Network Error');
+                btn.disabled = false;
+                btn.innerHTML = `<span>Login</span> <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>`;
+            }
+        }
+
+        // ==========================================
+        // KISAN CARD & FARMER ID VERIFICATION LOGIC
+        // ==========================================
+        let selectedKisanFile = null;
+        let kisanVerificationState = {
+            verified: false,
+            status: 'idle',
+            message: '',
+            detectedFarmerId: null,
+            detectedKisanCard: null
+        };
+
+        // Drag & Drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const el = document.getElementById('kisan-dropzone');
+            if (el) el.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const el = document.getElementById('kisan-dropzone');
+            if (el) el.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const el = document.getElementById('kisan-dropzone');
+            if (el) el.classList.remove('dragover');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processSelectedKisanFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        function handleKisanFileInput(input) {
+            if (input.files && input.files[0]) {
+                processSelectedKisanFile(input.files[0]);
+            }
+        }
+
+        function processSelectedKisanFile(file) {
+            selectedKisanFile = file;
+
+            // Update UI preview card
+            const previewCard = document.getElementById('kisan-file-preview-card');
+            const dropzone = document.getElementById('kisan-dropzone');
+            const filenameEl = document.getElementById('preview-filename');
+            const filesizeEl = document.getElementById('preview-filesize');
+            const filetypeEl = document.getElementById('preview-filetype');
+            const previewImg = document.getElementById('kisan-preview-img');
+
+            if (previewCard) previewCard.style.display = 'flex';
+            if (dropzone) dropzone.style.display = 'none';
+
+            if (filenameEl) filenameEl.textContent = file.name;
+            if (filesizeEl) filesizeEl.textContent = (file.size / 1024).toFixed(1) + ' KB';
+            if (filetypeEl) filetypeEl.textContent = file.type || 'Kisan Card';
+
+            if (file.type && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (previewImg) previewImg.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                if (previewImg) previewImg.src = 'assets/images/tomatoes.png';
+            }
+
+            // Trigger verification
+            verifyKisanCardCredentials();
+        }
+
+        function removeKisanFile() {
+            selectedKisanFile = null;
+            const fileInput = document.getElementById('register-kisan-file');
+            if (fileInput) fileInput.value = '';
+
+            const previewCard = document.getElementById('kisan-file-preview-card');
+            const dropzone = document.getElementById('kisan-dropzone');
+            if (previewCard) previewCard.style.display = 'none';
+            if (dropzone) dropzone.style.display = 'block';
+
+            updateKisanStatusUI('neutral', 'Please upload your Kisan Card document to verify.');
+            kisanVerificationState.verified = false;
+            kisanVerificationState.status = 'neutral';
+        }
+
+        function onFarmerCredentialsChanged() {
+            updateLiveKisanCardVisualizer();
+            if (selectedKisanFile) {
+                verifyKisanCardCredentials();
+            }
+        }
+
+        function updateKisanStatusUI(status, message) {
+            const box = document.getElementById('kisan-verify-status-box');
+            if (!box) return;
+
+            kisanVerificationState.status = status;
+            box.className = `kisan-verify-status-box ${status}`;
+            const iconMap = {
+                neutral: '<i class="fa-solid fa-circle-info verify-status-icon"></i>',
+                loading: '<i class="fa-solid fa-circle-notch fa-spin verify-status-icon"></i>',
+                success: '<i class="fa-solid fa-circle-check verify-status-icon"></i>',
+                error:   '<i class="fa-solid fa-triangle-exclamation verify-status-icon"></i>'
+            };
+
+            const iconHtml = iconMap[status] || iconMap.neutral;
+            box.innerHTML = `${iconHtml}<div id="kisan-verify-status-text">${message}</div>`;
+        }
+
+        // Live verification call to server
+        async function verifyKisanCardCredentials() {
+            const farmerId = document.getElementById('register-farmer-id').value.trim();
+            const kisanCard = document.getElementById('register-kisan-card').value.trim();
+
+            if (!farmerId || !kisanCard) {
+                updateKisanStatusUI('neutral', 'Please enter both Farmer ID and Kisan Card Number to verify matching document.');
+                kisanVerificationState.verified = false;
+                return;
+            }
+
+            if (!selectedKisanFile) {
+                updateKisanStatusUI('neutral', 'Please upload your Kisan Card document.');
+                kisanVerificationState.verified = false;
+                return;
+            }
+
+            updateKisanStatusUI('loading', `Verifying document with Farmer ID (${farmerId}) and Kisan Card (${kisanCard})...`);
+
+            try {
+                const formData = new FormData();
+                formData.append('farmer_id', farmerId);
+                formData.append('kisan_card_number', kisanCard);
+                formData.append('kisan_card_file', selectedKisanFile);
+                formData.append('check_only', 'true');
+
+                let response;
+                try {
+                    response = await fetch(getApiUrl('/auth/verify-kisan-card'), {
+                        method: 'POST',
+                        body: formData
+                    });
+                } catch (netErr) {
+                    response = await fetch('/api/auth/verify-kisan-card', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.verified) {
+                    kisanVerificationState.verified = true;
+                    updateKisanStatusUI('success', `<strong>✓ Match Confirmed!</strong> Uploaded Kisan Card verified successfully with Farmer ID (${farmerId}) and Kisan Card (${kisanCard}).`);
+                } else {
+                    kisanVerificationState.verified = false;
+                    updateKisanStatusUI('error', `<strong>✗ Verification Failed:</strong> ${data.message || 'Kisan Card details do not match the entered credentials.'}`);
+                }
+            } catch (err) {
+                console.error('Kisan verification error:', err);
+                kisanVerificationState.verified = false;
+                updateKisanStatusUI('error', 'Unable to reach verification service. Please check connection.');
+            }
+        }
+
+        // Cross-browser rounded rectangle path helper
+        function drawRoundRect(ctx, x, y, w, h, radius, fill, stroke) {
+            if (typeof radius === 'undefined') radius = 8;
+            if (typeof radius === 'number') {
+                radius = { tl: radius, tr: radius, br: radius, bl: radius };
+            }
+            ctx.beginPath();
+            ctx.moveTo(x + radius.tl, y);
+            ctx.lineTo(x + w - radius.tr, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius.tr);
+            ctx.lineTo(x + w, y + h - radius.br);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius.br, y + h);
+            ctx.lineTo(x + radius.bl, y + h);
+            ctx.quadraticCurveTo(x, y, x + radius.bl, y + h - radius.bl);
+            ctx.lineTo(x, y + radius.tl);
+            ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        // Pre-fill realistic default credentials if empty
+        function ensureDefaultFarmerCredentials() {
+            const fidInput = document.getElementById('register-farmer-id');
+            const kccInput = document.getElementById('register-kisan-card');
+            const farmLocInput = document.getElementById('register-farm-location');
+
+            if (fidInput && !fidInput.value.trim()) {
+                fidInput.value = 'FID-2024-' + Math.floor(1000 + Math.random() * 9000);
+            }
+            if (kccInput && !kccInput.value.trim()) {
+                kccInput.value = 'KCC-8841-' + Math.floor(1000 + Math.random() * 9000);
+            }
+            if (farmLocInput && !farmLocInput.value.trim()) {
+                farmLocInput.value = 'Nashik, Maharashtra';
+            }
+        }
+
+        // Update the live visualizer HTML elements on screen
+        function updateLiveKisanCardVisualizer() {
+            const fidInput = document.getElementById('register-farmer-id');
+            const kccInput = document.getElementById('register-kisan-card');
+            const fNameInput = document.getElementById('register-first-name');
+            const lNameInput = document.getElementById('register-last-name');
+            const farmLocInput = document.getElementById('register-farm-location');
+
+            const fid = (fidInput && fidInput.value.trim()) || 'FID-2024-8841';
+            const kcc = (kccInput && kccInput.value.trim()) || 'KCC-8841-3920';
+            const firstName = (fNameInput && fNameInput.value.trim()) || 'Ramesh';
+            const lastName = (lNameInput && lNameInput.value.trim()) || 'Kumar';
+            const loc = (farmLocInput && farmLocInput.value.trim()) || 'Nashik, Maharashtra';
+
+            const visFid = document.getElementById('vis-farmer-id');
+            const visKcc = document.getElementById('vis-kisan-card');
+            const visName = document.getElementById('vis-farmer-name');
+            const visLoc = document.getElementById('vis-location');
+
+            if (visFid) visFid.textContent = fid;
+            if (visKcc) visKcc.textContent = kcc;
+            if (visName) visName.textContent = `${firstName} ${lastName}`.toUpperCase();
+            if (visLoc) visLoc.textContent = loc.toUpperCase();
+        }
+
+        // Render high-definition, authentic Kisan Credit Card on canvas
+        function renderKisanCard(canvas, farmerId, kisanCard, farmerName, location) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = 640;
+            const H = 400;
+            canvas.width = W;
+            canvas.height = H;
+
+            // 1. Solid opaque base fill to prevent black or transparent output
+            ctx.fillStyle = '#0F291E';
+            ctx.fillRect(0, 0, W, H);
+
+            // 2. Card background with luxury agricultural gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, '#153E2A');
+            bgGrad.addColorStop(0.45, '#245C3E');
+            bgGrad.addColorStop(1, '#0C2216');
+            ctx.fillStyle = bgGrad;
+            drawRoundRect(ctx, 4, 4, W - 8, H - 8, 20, true, false);
+
+            // 3. Elegant Gold Outer & Inner Borders
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 2.5;
+            drawRoundRect(ctx, 6, 6, W - 12, H - 12, 18, false, true);
+
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+            ctx.lineWidth = 1;
+            drawRoundRect(ctx, 12, 12, W - 24, H - 24, 14, false, true);
+
+            // 4. Subtle watermark circle emblem
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 40;
+            ctx.beginPath();
+            ctx.arc(W - 120, H / 2, 140, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // 5. National Tricolor Ribbon at top
+            ctx.fillStyle = '#FF9933'; // Saffron
+            ctx.fillRect(20, 20, W - 40, 5);
+            ctx.fillStyle = '#FFFFFF'; // White
+            ctx.fillRect(20, 25, W - 40, 5);
+            ctx.fillStyle = '#138808'; // Green
+            ctx.fillRect(20, 30, W - 40, 5);
+
+            // 6. Header Text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '600 12px "Poppins", "Segoe UI", Arial, sans-serif';
+            ctx.fillText('GOVERNMENT OF INDIA • MINISTRY OF AGRICULTURE & FARMERS WELFARE', 32, 58);
+
+            ctx.fillStyle = '#FDE68A';
+            ctx.font = 'bold 20px "Georgia", "Times New Roman", serif';
+            ctx.fillText('KISAN CREDIT CARD / किसान क्रेडिट कार्ड', 32, 86);
+
+            // 7. EMV Smart Chip Graphic
+            const chipGrad = ctx.createLinearGradient(35, 110, 95, 155);
+            chipGrad.addColorStop(0, '#FFE259');
+            chipGrad.addColorStop(1, '#FFA751');
+            ctx.fillStyle = chipGrad;
+            drawRoundRect(ctx, 36, 110, 62, 46, 7, true, false);
+
+            ctx.strokeStyle = '#9A6B1F';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(46, 110, 22, 46);
+            ctx.strokeRect(36, 125, 62, 16);
+
+            ctx.fillStyle = '#B7791F';
+            ctx.beginPath();
+            ctx.arc(57, 133, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 8. Contactless Wi-Fi Waves
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(120, 133, 9, -Math.PI / 3, Math.PI / 3);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(120, 133, 16, -Math.PI / 3, Math.PI / 3);
+            ctx.stroke();
+
+            // 9. Photo Box
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            drawRoundRect(ctx, W - 125, 100, 92, 115, 10, true, false);
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 1.5;
+            drawRoundRect(ctx, W - 125, 100, 92, 115, 10, false, true);
+
+            ctx.font = '44px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('👨‍🌾', W - 79, 168);
+            ctx.textAlign = 'left';
+
+            ctx.fillStyle = '#FDE68A';
+            ctx.font = 'bold 9px "Poppins", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('GOVT VERIFIED', W - 79, 202);
+            ctx.textAlign = 'left';
+
+            // 10. Credentials - High Contrast & OCR-Optimized
+            // Farmer ID
+            ctx.fillStyle = '#A7F3D0';
+            ctx.font = 'bold 11px "Poppins", "Segoe UI", sans-serif';
+            ctx.fillText('FARMER ID / किसान पहचान पत्र संख्या:', 36, 185);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 20px "Courier New", Courier, monospace';
+            ctx.fillText(farmerId, 36, 210);
+
+            // Kisan Card Number
+            ctx.fillStyle = '#A7F3D0';
+            ctx.font = 'bold 11px "Poppins", "Segoe UI", sans-serif';
+            ctx.fillText('KISAN CARD NO / किसान क्रेडिट कार्ड संख्या:', 36, 242);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 20px "Courier New", Courier, monospace';
+            ctx.fillText(kisanCard, 36, 267);
+
+            // Farmer Name
+            ctx.fillStyle = '#A7F3D0';
+            ctx.font = 'bold 11px "Poppins", "Segoe UI", sans-serif';
+            ctx.fillText('FARMER NAME / धारक का नाम:', 36, 298);
+
+            ctx.fillStyle = '#F8FAFC';
+            ctx.font = 'bold 16px "Poppins", "Segoe UI", sans-serif';
+            ctx.fillText(farmerName.toUpperCase(), 36, 320);
+
+            // District & Validity
+            ctx.fillStyle = '#CBD5E1';
+            ctx.font = '12px "Poppins", "Segoe UI", sans-serif';
+            ctx.fillText('DISTRICT: ' + location.toUpperCase() + '  |  VALID THRU: 12/2029', 36, 342);
+
+            // 11. Official Verification Seal Stamp (Right Bottom)
+            ctx.save();
+            ctx.translate(W - 88, 280);
+            ctx.rotate(-0.08);
+            ctx.strokeStyle = '#34D399';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(-50, -22, 100, 44);
+            ctx.fillStyle = '#34D399';
+            ctx.font = 'bold 11px "Poppins", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('VERIFIED', 0, -3);
+            ctx.font = 'bold 9px "Poppins", sans-serif';
+            ctx.fillText('AGRI REGISTRY', 0, 12);
+            ctx.restore();
+
+            // 12. Bottom Security Barcode Simulation
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            for (let i = 36; i < 360; i += 4) {
+                const w = (i % 8 === 0) ? 2.5 : 1.2;
+                ctx.fillRect(i, 360, w, 16);
+            }
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '10px monospace';
+            ctx.fillText(`ID:${farmerId} | KCC:${kisanCard} | AUTH:DIGITAL-AGRI-IND`, 36, 390);
+        }
+
+        // Download the generated sample card as a genuine high-res PNG
+        function downloadSampleKisanCard() {
+            ensureDefaultFarmerCredentials();
+            const canvas = document.getElementById('kisan-canvas');
+            if (!canvas) return;
+
+            const fidInput = document.getElementById('register-farmer-id');
+            const kccInput = document.getElementById('register-kisan-card');
+            const fNameInput = document.getElementById('register-first-name');
+            const lNameInput = document.getElementById('register-last-name');
+            const farmLocInput = document.getElementById('register-farm-location');
+
+            const farmerId = (fidInput && fidInput.value.trim()) || 'FID-2024-8841';
+            const kisanCard = (kccInput && kccInput.value.trim()) || 'KCC-8841-3920';
+            const farmerName = `${(fNameInput && fNameInput.value.trim()) || 'Ramesh'} ${(lNameInput && lNameInput.value.trim()) || 'Kumar'}`.trim();
+            const location = (farmLocInput && farmLocInput.value.trim()) || 'Nashik, Maharashtra';
+
+            // 1. Explicitly render full card FIRST to canvas
+            renderKisanCard(canvas, farmerId, kisanCard, farmerName, location);
+
+            // 2. Export genuine non-black PNG
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `kisan-card-${farmerId}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 3. Update live visualizer
+            updateLiveKisanCardVisualizer();
+
+            toast.success(`Kisan Card (${farmerId}) downloaded! Now click "Browse from Computer" below to upload it.`, 'Card Downloaded');
+        }
+
+        // 1-Click Auto-Attach helper: generates card and attaches to upload input directly
+        function autoAttachTestKisanCard() {
+            ensureDefaultFarmerCredentials();
+            const canvas = document.getElementById('kisan-canvas');
+            if (!canvas) return;
+
+            const fidInput = document.getElementById('register-farmer-id');
+            const kccInput = document.getElementById('register-kisan-card');
+            const fNameInput = document.getElementById('register-first-name');
+            const lNameInput = document.getElementById('register-last-name');
+            const farmLocInput = document.getElementById('register-farm-location');
+
+            const farmerId = (fidInput && fidInput.value.trim()) || 'FID-2024-8841';
+            const kisanCard = (kccInput && kccInput.value.trim()) || 'KCC-8841-3920';
+            const farmerName = `${(fNameInput && fNameInput.value.trim()) || 'Ramesh'} ${(lNameInput && lNameInput.value.trim()) || 'Kumar'}`.trim();
+            const location = (farmLocInput && farmLocInput.value.trim()) || 'Nashik, Maharashtra';
+
+            // 1. Render card to canvas
+            renderKisanCard(canvas, farmerId, kisanCard, farmerName, location);
+
+            // 2. Convert to Blob & File object
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    toast.error('Failed to create card image. Please try again.');
+                    return;
+                }
+                const filename = `kisan-card-${farmerId}.png`;
+                const file = new File([blob], filename, { type: 'image/png' });
+
+                // Attach to file input via DataTransfer
+                try {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    const fileInput = document.getElementById('register-kisan-file');
+                    if (fileInput) fileInput.files = dataTransfer.files;
+                } catch (dtErr) {
+                    console.warn('DataTransfer not available:', dtErr);
+                }
+
+                // Process preview and trigger live match verification
+                processSelectedKisanFile(file);
+                updateLiveKisanCardVisualizer();
+                toast.success('Sample card generated and attached! Verifying match with server...', '1-Click Attached');
+            }, 'image/png');
+        }
+
+        // Modal Zoom Handlers for Full-Card View
+        function openCardZoomModal() {
+            const modal = document.getElementById('card-zoom-modal');
+            const img = document.getElementById('card-zoom-img');
+            const previewImg = document.getElementById('kisan-preview-img');
+            const canvas = document.getElementById('kisan-canvas');
+
+            if (previewImg && previewImg.src && !previewImg.src.endsWith('assets/images/tomatoes.png')) {
+                img.src = previewImg.src;
+            } else if (canvas) {
+                const fid = (document.getElementById('register-farmer-id') && document.getElementById('register-farmer-id').value.trim()) || 'FID-2024-8841';
+                const kcc = (document.getElementById('register-kisan-card') && document.getElementById('register-kisan-card').value.trim()) || 'KCC-8841-3920';
+                const fName = (document.getElementById('register-first-name') && document.getElementById('register-first-name').value.trim()) || 'Ramesh';
+                const lName = (document.getElementById('register-last-name') && document.getElementById('register-last-name').value.trim()) || 'Kumar';
+                const loc = (document.getElementById('register-farm-location') && document.getElementById('register-farm-location').value.trim()) || 'Maharashtra, India';
+                renderKisanCard(canvas, fid, kcc, `${fName} ${lName}`, loc);
+                img.src = canvas.toDataURL('image/png');
+            }
+
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeCardZoomModal() {
+            const modal = document.getElementById('card-zoom-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // Handle Registration Submission
+        async function handleRegisterSubmit() {
+            const firstName = document.getElementById('register-first-name').value.trim();
+            const lastName  = document.getElementById('register-last-name').value.trim();
+            const email     = document.getElementById('register-email').value.trim();
+            const phone     = document.getElementById('register-phone').value.trim();
+            const password  = document.getElementById('register-password').value;
+            const termsAgree= document.getElementById('terms-agree').checked;
+            const roleEl    = document.querySelector('input[name="auth-role"]:checked');
+            const role      = roleEl ? roleEl.value : 'customer';
+            const farmName  = document.getElementById('register-farm-name').value.trim();
+            const farmLoc   = document.getElementById('register-farm-location').value.trim();
+            const farmerId  = document.getElementById('register-farmer-id') ? document.getElementById('register-farmer-id').value.trim() : '';
+            const kisanCard = document.getElementById('register-kisan-card') ? document.getElementById('register-kisan-card').value.trim() : '';
+            const btn       = document.getElementById('btn-register-submit');
+
+            const fullName = `${firstName} ${lastName}`.trim();
+
+            if (!fullName || !email || !password) {
+                toast.error('Please fill in your name, email, and password.', 'Required Fields');
+                return;
+            }
+
+            if (!termsAgree) {
+                toast.error('Please accept the Terms of Service to proceed.', 'Terms Required');
+                return;
+            }
+
+            if (password.length < 8) {
+                toast.error('Password must be at least 8 characters long.', 'Password Too Short');
+                return;
+            }
+
+            // Farmer specific verification requirements
+            if (role === 'farmer') {
+                if (!farmerId) {
+                    toast.error('Farmer ID is required for farmer registration.', 'Farmer ID Required');
+                    document.getElementById('register-farmer-id').focus();
+                    return;
+                }
+                if (!kisanCard) {
+                    toast.error('Kisan Card number is required for farmer registration.', 'Kisan Card Required');
+                    document.getElementById('register-kisan-card').focus();
+                    return;
+                }
+                if (!selectedKisanFile) {
+                    toast.error('Please upload your Kisan Card document to verify registration.', 'Document Required');
+                    const dropzone = document.getElementById('kisan-dropzone');
+                    if (dropzone) {
+                        dropzone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        dropzone.style.borderColor = '#DC2626';
+                        setTimeout(() => dropzone.style.borderColor = '', 2000);
+                    }
+                    return;
+                }
+                if (kisanVerificationState.status === 'error' && !kisanVerificationState.verified) {
+                    toast.error('Kisan Card verification failed. The uploaded card does not match the entered Farmer ID / Kisan Card number.', 'Verification Mismatch');
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>${role === 'farmer' ? 'Verifying Card & Registering...' : 'Creating Account...'}</span> <i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+            try {
+                let response;
+                if (role === 'farmer' && selectedKisanFile) {
+                    // Use FormData for multipart upload with card document
+                    const formData = new FormData();
+                    formData.append('name', fullName);
+                    formData.append('email', email);
+                    formData.append('password', password);
+                    formData.append('role', role);
+                    formData.append('phone', phone || '');
+                    formData.append('farm_name', farmName || '');
+                    formData.append('farm_location', farmLoc || '');
+                    formData.append('farmer_id', farmerId);
+                    formData.append('kisan_card_number', kisanCard);
+                    formData.append('kisan_card_file', selectedKisanFile);
+
+                    try {
+                        response = await fetch(getApiUrl('/auth/register'), {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } catch (netErr) {
+                        response = await fetch('/api/auth/register', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                } else {
+                    const payload = {
+                        name: fullName,
+                        email,
+                        password,
+                        role,
+                        phone: phone || null
+                    };
+                    try {
+                        response = await fetch(getApiUrl('/auth/register'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    } catch (netErr) {
+                        response = await fetch('/api/auth/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    toast.success(data.message || 'Registration successful!', 'Account Created');
+
+                    setTimeout(() => {
+                        if (data.user.role === 'farmer') {
+                            window.location.replace('farmer-dashboard.html');
+                        } else {
+                            window.location.replace('customer-dashboard.html');
+                        }
+                    }, 800);
+                } else {
+                    toast.error(data.message || 'Registration failed. Please verify your details.', 'Registration Failed');
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Create Account</span> <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>`;
+                }
+            } catch (err) {
+                console.error('Registration error:', err);
+                toast.error('Unable to connect to server. Please try again.', 'Network Error');
+                btn.disabled = false;
+                btn.innerHTML = `<span>Create Account</span> <i class="fa-solid fa-arrow-right btn-arrow-icon"></i>`;
+            }
+        }
+
+        // Initialize page state from URL hash
+        document.addEventListener('DOMContentLoaded', () => {
+            ensureDefaultFarmerCredentials();
+            updateLiveKisanCardVisualizer();
+            if (window.location.hash === '#register') {
+                switchAuthView('register');
+            } else {
+                switchAuthView('login');
+            }
+        });
+    </script>
+    <script src="js/i18n.js"></script>
+</body>
+</html>

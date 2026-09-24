@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FreshField — Delivery Partner</title>
+    <meta name="description" content="FreshField secure mobile live GPS delivery tracking">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/i18n.css">
+
+    <style>
+        :root {
+            --cream:         #F8F5EC;
+            --green-primary: #355C24;
+            --green-sec:     #6F9638;
+            --green-pale:    #EAF0DF;
+            --orange:        #F28C28;
+            --orange-pale:   #FCECDD;
+            --text-dark:     #1F211B;
+            --text-muted:    #6F7168;
+            --white:         #FFFFFF;
+            --shadow-md:     0 6px 24px rgba(31,33,27,0.10);
+            --radius-md:     14px;
+            --radius-pill:   100px;
+            --font:          'Poppins', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: var(--font); background: var(--cream); color: var(--text-dark); }
+
+        #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* Header */
+        .header {
+            background: var(--green-primary);
+            color: var(--white);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        .header-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-logo span { color: #A8BF72; }
+        .header-subtitle { font-size: 11px; opacity: 0.85; margin-left: auto; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: var(--radius-pill); }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(53,92,36,0.10);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .status-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #ccc; flex-shrink: 0;
+        }
+        .status-dot.active { background: #22c55e; animation: pulse 1.8s infinite; }
+        .status-dot.delivered { background: var(--green-primary); animation: none; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.2)} }
+        
+        .status-label { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+        .status-sublabel { font-size: 11px; color: var(--text-muted); }
+        .gps-badge {
+            margin-left: auto; font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: var(--radius-pill);
+            background: #fce4e4; color: #dc2626; display: flex; align-items: center; gap: 5px;
+        }
+        .gps-badge.active { background: var(--green-pale); color: var(--green-primary); }
+
+        /* Map Container */
+        #delivery-map {
+            flex: 1;
+            min-height: 0;
+            z-index: 1;
+            width: 100%;
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            background: var(--white);
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -6px 30px rgba(0,0,0,0.12);
+            padding: 18px 20px 24px;
+            flex-shrink: 0;
+            max-height: 48vh;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .pull-handle {
+            width: 44px; height: 4px; border-radius: 2px;
+            background: #e2e2e2; margin: 0 auto 14px;
+        }
+
+        /* Order Info Card */
+        .order-card {
+            background: var(--cream);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(53,92,36,0.08);
+        }
+        .order-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .order-number { font-size: 12px; font-weight: 700; color: var(--green-primary); }
+        .order-amount { font-size: 13px; font-weight: 700; color: var(--orange); }
+        .order-address {
+            font-size: 13px; font-weight: 600; color: var(--text-dark);
+            display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;
+        }
+        .order-address i { color: var(--green-primary); margin-top: 2px; flex-shrink: 0; }
+        .order-customer { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+
+        /* GPS Action Section */
+        .gps-control-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 14px; background: var(--green-pale); border-radius: var(--radius-md);
+            margin-bottom: 14px; border: 1.5px solid rgba(53,92,36,0.15);
+        }
+        .gps-control-info { display: flex; align-items: center; gap: 10px; }
+        .gps-icon-box {
+            width: 38px; height: 38px; border-radius: 10px; background: var(--white);
+            display: flex; align-items: center; justify-content: center; color: var(--green-primary); font-size: 18px;
+        }
+        .gps-btn {
+            padding: 8px 14px; border-radius: var(--radius-pill); font-family: var(--font);
+            font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .gps-btn.start { background: var(--green-primary); color: var(--white); }
+        .gps-btn.stop { background: #dc2626; color: var(--white); }
+
+        /* Status Buttons Grid */
+        .status-section { margin-bottom: 12px; }
+        .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 8px; }
+        .status-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .status-btn {
+            padding: 10px 8px; border: 1.5px solid #E5DEC8;
+            border-radius: var(--radius-md); background: #FAF7F0;
+            color: var(--text-dark); font-family: var(--font);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            justify-content: center; gap: 6px;
+        }
+        .status-btn.active { background: var(--green-primary); color: var(--white); border-color: var(--green-primary); }
+        .status-btn.delivered-btn {
+            background: var(--orange-pale); color: var(--orange);
+            border-color: #F8D8BE; grid-column: span 2; font-weight: 700; padding: 12px; font-size: 13px;
+        }
+        .status-btn.delivered-btn.active { background: var(--green-primary); color: var(--white); border-color: var(--green-primary); }
+        .status-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .last-update-text { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 6px; }
+
+        /* Confirmation Modal */
+        .custom-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center;
+            padding: 20px; z-index: 9999;
+        }
+        .custom-modal.show { display: flex; }
+        .modal-box {
+            background: var(--white); border-radius: 20px; padding: 24px;
+            max-width: 360px; width: 100%; text-align: center; box-shadow: var(--shadow-md);
+        }
+        .modal-icon { font-size: 40px; margin-bottom: 12px; }
+        .modal-title { font-size: 17px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; }
+        .modal-msg { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; font-family: var(--font);
+        }
+        .modal-btn.cancel { background: #f0ede6; color: var(--text-dark); }
+        .modal-btn.confirm { background: var(--green-primary); color: var(--white); }
+        .modal-btn.confirm-danger { background: #dc2626; color: var(--white); }
+
+        /* Loading / Error */
+        #loading-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; flex: 1; gap: 16px; padding: 40px; text-align: center;
+        }
+        .loading-spinner {
+            width: 44px; height: 44px; border: 4px solid var(--green-pale);
+            border-top-color: var(--green-primary); border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Delivered Overlay */
+        .delivered-overlay {
+            position: fixed; inset: 0; background: rgba(53,92,36,0.96);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; text-align: center; padding: 30px; z-index: 10000;
+        }
+        .delivered-overlay.show { display: flex; }
+        .delivered-check { font-size: 72px; }
+        .delivered-title { font-size: 26px; font-weight: 700; color: white; }
+        .delivered-sub { font-size: 14px; color: rgba(255,255,255,0.85); max-width: 300px; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div id="loading-state">
+        <div class="loading-spinner"></div>
+        <div style="font-size:14px;color:var(--text-muted);font-weight:500;">Connecting to FreshField Delivery...</div>
+    </div>
+</div>
+
+<!-- Delivered Overlay -->
+<div class="delivered-overlay" id="delivered-overlay">
+    <div class="delivered-check">🎉</div>
+    <div class="delivered-title">Order Delivered!</div>
+    <div class="delivered-sub">Thank you for delivering fresh farm produce. The customer and farmer have been notified.</div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="custom-modal" id="confirm-modal">
+    <div class="modal-box">
+        <div class="modal-icon" id="confirm-icon">⚠️</div>
+        <div class="modal-title" id="confirm-title">Are you sure?</div>
+        <div class="modal-msg" id="confirm-msg">Do you want to proceed?</div>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="modal-btn confirm" id="confirm-action-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Socket.io Client -->
+<script src="/socket.io/socket.io.js"></script>
+<!-- Leaflet.js -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const API = 'http://localhost:5000/api';
+const params = new URLSearchParams(window.location.search);
+const TOKEN = params.get('token');
+
+let map = null;
+let deliveryMarker = null;
+let deliveryCircle = null;
+let destinationMarker = null;
+let trailPolyline = null;
+let trailCoords = [];
+let watchId = null;
+let gpsActive = false;
+let assignmentData = null;
+let socket = null;
+let lastLat = null, lastLng = null;
+let lastUpdateTime = 0;
+
+// Icons
+const deliveryIcon = L.divIcon({
+    html: `<div style="background:#355C24;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.35)">
+                <i class="fas fa-motorcycle" style="color:white;font-size:16px"></i>
+           </div>`,
+    className: '', iconSize: [38, 38], iconAnchor: [19, 19]
+});
+
+const destinationIcon = L.divIcon({
+    html: `<div style="background:#F28C28;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.35)">
+                <i class="fas fa-house" style="color:white;font-size:15px"></i>
+           </div>`,
+    className: '', iconSize: [38, 38], iconAnchor: [19, 19]
+});
+
+// Init
+async function init() {
+    if (!TOKEN) {
+        showError('Missing Tracking Token', 'Please use the secure link provided by the farmer.');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API}/delivery/track/${TOKEN}`);
+        const data = await resp.json();
+
+        if (!data.success) {
+            showError('Invalid or Expired Link', data.message || 'This tracking link is not active.');
+            return;
+        }
+
+        assignmentData = data.assignment;
+        initSocket();
+        renderApp();
+    } catch(e) {
+        showError('Connection Error', 'Could not connect to the server. Please check your internet connection.');
+    }
+}
+
+// Setup Socket.io
+function initSocket() {
+    try {
+        if (typeof io !== 'undefined') {
+            socket = io('http://localhost:5000');
+            socket.on('connect', () => {
+                if (assignmentData) {
+                    socket.emit('join_order_room', { orderId: assignmentData.order_id, token: TOKEN });
+                }
+            });
+        }
+    } catch(e) {
+        console.warn('Socket connection error, falling back to REST API');
+    }
+}
+
+// Render App
+function renderApp() {
+    const a = assignmentData;
+    const isDelivered = a.status === 'delivered' || a.order_status === 'delivered';
+
+    document.getElementById('app').innerHTML = `
+        <div class="header">
+            <div class="header-logo">Fresh<span>Field</span></div>
+            <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+                <div class="freshfield-lang-dropdown" title="Change Language / भाषा बदलें / ભાષા બદલો" style="padding:4px 10px; font-size:12px;">
+                    <i class="fas fa-globe"></i>
+                    <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)" aria-label="Select Language" style="font-size:12px;">
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="gu">ગુજરાતી</option>
+                    </select>
+                </div>
+                <div class="header-subtitle"><i class="fas fa-shield-halved" style="margin-right:4px;"></i> Delivery Partner</div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-dot ${isDelivered ? 'delivered' : (gpsActive ? 'active' : '')}" id="status-dot"></div>
+            <div>
+                <div class="status-label" id="status-label">${formatStatus(a.status || 'assigned')}</div>
+                <div class="status-sublabel">Order #${a.order_number}</div>
+            </div>
+            <div class="gps-badge ${gpsActive ? 'active' : ''}" id="gps-badge">
+                <i class="fas fa-satellite-dish"></i> <span>${gpsActive ? 'GPS Live' : 'GPS Off'}</span>
+            </div>
+        </div>
+
+        <div id="delivery-map"></div>
+
+        <div class="bottom-panel">
+            <div class="pull-handle"></div>
+
+            <div class="order-card">
+                <div class="order-header-row">
+                    <span class="order-number">ORDER #${a.order_number}</span>
+                    <span class="order-amount">₹${parseFloat(a.total_amount || 0).toFixed(2)}</span>
+                </div>
+                <div class="order-address">
+                    <i class="fas fa-location-dot"></i>
+                    <span>${a.delivery_address || 'Address not specified'}</span>
+                </div>
+                <div class="order-customer">
+                    <i class="fas fa-user" style="color:var(--green-sec)"></i>
+                    <span>Customer: <strong>${a.customer_name}</strong></span>
+                    ${a.delivery_person_name ? `<span style="margin-left:auto;color:var(--text-dark);"><i class="fas fa-id-badge" style="color:var(--orange)"></i> ${a.delivery_person_name}</span>` : ''}
+                </div>
+            </div>
+
+            <!-- GPS Control Button -->
+            <div class="gps-control-card">
+                <div class="gps-control-info">
+                    <div class="gps-icon-box"><i class="fas fa-crosshairs"></i></div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:var(--green-primary);">Live GPS Sharing</div>
+                        <div style="font-size:11px;color:var(--text-muted);" id="gps-subtext">Share your live location with customer</div>
+                    </div>
+                </div>
+                <button class="gps-btn ${gpsActive ? 'stop' : 'start'}" id="gps-action-btn" onclick="toggleGPS()" ${isDelivered ? 'disabled' : ''}>
+                    <i class="fas ${gpsActive ? 'fa-pause' : 'fa-play'}"></i>
+                    <span>${gpsActive ? 'Stop' : 'Start GPS'}</span>
+                </button>
+            </div>
+
+            <!-- Status Buttons -->
+            <div class="status-section">
+                <div class="section-label">Update Delivery Status</div>
+                <div class="status-btns">
+                    <button class="status-btn ${a.status === 'picked_up' ? 'active' : ''}" 
+                            id="btn-picked" onclick="handleStatusClick('picked_up')" ${isDelivered ? 'disabled' : ''}>
+                        <i class="fas fa-box"></i> Picked Up
+                    </button>
+                    <button class="status-btn ${['out_for_delivery', 'on_the_way'].includes(a.status) ? 'active' : ''}"
+                            id="btn-out" onclick="handleStatusClick('on_the_way')" ${isDelivered ? 'disabled' : ''}>
+                        <i class="fas fa-motorcycle"></i> En Route
+                    </button>
+                    <button class="status-btn delivered-btn ${a.status === 'delivered' ? 'active' : ''}"
+                            id="btn-delivered" onclick="confirmDelivered()" ${isDelivered ? 'disabled' : ''}>
+                        <i class="fas fa-circle-check"></i> Mark as Delivered
+                    </button>
+                </div>
+            </div>
+
+            <div class="last-update-text" id="last-update">GPS not sharing</div>
+        </div>
+    `;
+
+    initMap(a);
+
+    if (isDelivered) {
+        showDeliveredOverlay();
+    }
+}
+
+// Map Initialization
+async function initMap(a) {
+    const defaultCenter = [20.5937, 78.9629];
+
+    map = L.map('delivery-map', {
+        center: defaultCenter,
+        zoom: 13,
+        zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // If assignment has last recorded location
+    if (a.last_location) {
+        const { latitude, longitude } = a.last_location;
+        map.setView([latitude, longitude], 15);
+        placeDeliveryMarker(latitude, longitude);
+    }
+
+    // Try to place destination marker
+    let destLat = parseFloat(a.destination_latitude);
+    let destLng = parseFloat(a.destination_longitude);
+
+    if (!isNaN(destLat) && !isNaN(destLng)) {
+        destinationMarker = L.marker([destLat, destLng], { icon: destinationIcon })
+            .bindPopup(`<b>📍 Customer Destination</b><br>${a.delivery_address || ''}`)
+            .addTo(map);
+        if (!a.last_location) map.setView([destLat, destLng], 14);
+    } else if (a.delivery_address) {
+        // Geocode via Nominatim
+        geocodeAddress(a.delivery_address);
+    }
+}
+
+async function geocodeAddress(address) {
+    try {
+        const query = encodeURIComponent(address);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            destinationMarker = L.marker([lat, lon], { icon: destinationIcon })
+                .bindPopup(`<b>📍 Customer Destination</b><br>${address}`)
+                .addTo(map);
+            if (!lastLat) map.setView([lat, lon], 14);
+        }
+    } catch(e) {
+        console.warn('Geocoding fallback failed gracefully');
+    }
+}
+
+// GPS Controls
+function toggleGPS() {
+    if (gpsActive) {
+        openConfirmModal(
+            'Stop GPS Sharing?',
+            'The customer and farmer will not be able to see your live location until you resume.',
+            'Stop Sharing',
+            true,
+            () => stopGPS()
+        );
+    } else {
+        startGPS();
+    }
+}
+
+async function startGPS() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    try {
+        // Notify backend that tracking is starting
+        await fetch(`${API}/delivery/track/${TOKEN}/start`, { method: 'POST' });
+    } catch(e) {}
+
+    gpsActive = true;
+    updateGPSUI(true);
+
+    watchId = navigator.geolocation.watchPosition(
+        onPositionUpdate,
+        onPositionError,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+    );
+}
+
+async function stopGPS() {
+    gpsActive = false;
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+    updateGPSUI(false);
+
+    try {
+        await fetch(`${API}/delivery/track/${TOKEN}/stop`, { method: 'POST' });
+    } catch(e) {}
+}
+
+function updateGPSUI(active) {
+    const badge = document.getElementById('gps-badge');
+    const dot = document.getElementById('status-dot');
+    const btn = document.getElementById('gps-action-btn');
+    const sub = document.getElementById('gps-subtext');
+
+    if (badge) {
+        badge.className = 'gps-badge ' + (active ? 'active' : '');
+        badge.innerHTML = `<i class="fas fa-satellite-dish"></i> <span>${active ? 'GPS Live' : 'GPS Off'}</span>`;
+    }
+    if (dot && assignmentData?.status !== 'delivered') {
+        dot.className = 'status-dot ' + (active ? 'active' : '');
+    }
+    if (btn) {
+        btn.className = 'gps-btn ' + (active ? 'stop' : 'start');
+        btn.innerHTML = `<i class="fas ${active ? 'fa-pause' : 'fa-play'}"></i> <span>${active ? 'Stop' : 'Start GPS'}</span>`;
+    }
+    if (sub) {
+        sub.textContent = active ? '🟢 Live GPS sharing is active' : 'GPS sharing paused';
+    }
+}
+
+// GPS Position Handler with Throttling
+async function onPositionUpdate(position) {
+    const { latitude, longitude, accuracy, heading, speed } = position.coords;
+    const now = Date.now();
+
+    // Throttle updates: minimum 5m movement or at least 4s interval
+    if (lastLat !== null && lastLng !== null) {
+        const dist = getDistanceMeters(lastLat, lastLng, latitude, longitude);
+        if (dist < 4 && (now - lastUpdateTime) < 4000) return;
+    }
+
+    lastLat = latitude;
+    lastLng = longitude;
+    lastUpdateTime = now;
+
+    placeDeliveryMarker(latitude, longitude, accuracy);
+
+    // Trail
+    trailCoords.push([latitude, longitude]);
+    if (trailCoords.length > 50) trailCoords.shift();
+    drawTrail();
+
+    const timeStr = new Date().toLocaleTimeString();
+    const accStr = accuracy ? `±${Math.round(accuracy)}m` : '';
+    const el = document.getElementById('last-update');
+    if (el) el.textContent = `Last update: ${timeStr} ${accStr}`;
+
+    const payload = { latitude, longitude, accuracy, heading, speed };
+
+    // 1. Emit via socket for instant update
+    if (socket && socket.connected) {
+        socket.emit('send_location', { token: TOKEN, ...payload });
+    }
+
+    // 2. Also send via HTTP POST for guaranteed database persistence
+    try {
+        await fetch(`${API}/delivery/track/${TOKEN}/location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch(e) {}
+}
+
+function onPositionError(err) {
+    console.warn('GPS error:', err.message);
+    const sub = document.getElementById('gps-subtext');
+    if (sub) sub.textContent = `GPS error: ${err.message}`;
+}
+
+function placeDeliveryMarker(lat, lng, accuracy) {
+    if (!map) return;
+
+    if (!deliveryMarker) {
+        deliveryMarker = L.marker([lat, lng], { icon: deliveryIcon })
+            .bindPopup('<b>🛵 Your Current Location</b>')
+            .addTo(map);
+    } else {
+        deliveryMarker.setLatLng([lat, lng]);
+    }
+
+    if (accuracy && accuracy < 200) {
+        if (!deliveryCircle) {
+            deliveryCircle = L.circle([lat, lng], {
+                radius: accuracy,
+                color: '#355C24', fillColor: '#355C24', fillOpacity: 0.08, weight: 1
+            }).addTo(map);
+        } else {
+            deliveryCircle.setLatLng([lat, lng]).setRadius(accuracy);
+        }
+    }
+
+    map.setView([lat, lng], Math.max(map.getZoom(), 16));
+}
+
+function drawTrail() {
+    if (!map || trailCoords.length < 2) return;
+    if (trailPolyline) map.removeLayer(trailPolyline);
+    trailPolyline = L.polyline(trailCoords, {
+        color: '#355C24', weight: 3, opacity: 0.6, dashArray: '6, 8'
+    }).addTo(map);
+}
+
+function getDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Status Updates
+async function handleStatusClick(status) {
+    await updateStatus(status);
+}
+
+function confirmDelivered() {
+    openConfirmModal(
+        'Confirm Order Delivery',
+        'Are you sure the order has been handed over to the customer? This will complete the delivery and stop GPS tracking.',
+        'Mark as Delivered',
+        false,
+        () => updateStatus('delivered')
+    );
+}
+
+async function updateStatus(status) {
+    const btns = document.querySelectorAll('.status-btn');
+    btns.forEach(b => b.disabled = true);
+
+    try {
+        const resp = await fetch(`${API}/delivery/track/${TOKEN}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            if (assignmentData) assignmentData.status = status;
+            btns.forEach(b => b.classList.remove('active'));
+
+            if (status === 'picked_up') document.getElementById('btn-picked')?.classList.add('active');
+            if (status === 'on_the_way' || status === 'out_for_delivery') document.getElementById('btn-out')?.classList.add('active');
+
+            const statusLabel = document.getElementById('status-label');
+            if (statusLabel) statusLabel.textContent = formatStatus(status);
+
+            if (status === 'delivered') {
+                stopGPS();
+                document.getElementById('btn-delivered')?.classList.add('active');
+                setTimeout(showDeliveredOverlay, 600);
+            } else {
+                btns.forEach(b => b.disabled = false);
+            }
+        } else {
+            alert(data.message || 'Status update failed');
+            btns.forEach(b => b.disabled = false);
+        }
+    } catch(e) {
+        alert('Network error. Please try again.');
+        btns.forEach(b => b.disabled = false);
+    }
+}
+
+function showDeliveredOverlay() {
+    document.getElementById('delivered-overlay')?.classList.add('show');
+}
+
+// Modal Helpers
+function openConfirmModal(title, msg, confirmText, isDanger, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent = msg;
+    const btn = document.getElementById('confirm-action-btn');
+    btn.textContent = confirmText;
+    btn.className = 'modal-btn ' + (isDanger ? 'confirm-danger' : 'confirm');
+    btn.onclick = () => {
+        closeConfirmModal();
+        if (onConfirm) onConfirm();
+    };
+    modal.classList.add('show');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirm-modal')?.classList.remove('show');
+}
+
+function formatStatus(s) {
+    const map = {
+        assigned: '📋 Ready for Pickup',
+        picked_up: '📦 Package Picked Up',
+        out_for_delivery: '🚴 Out for Delivery',
+        on_the_way: '🚚 On the Way',
+        delivered: '✅ Delivered'
+    };
+    return map[s] || s;
+}
+
+function showError(title, msg) {
+    document.getElementById('app').innerHTML = `
+        <div id="loading-state">
+            <div style="font-size:48px;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-dark);margin-top:8px;">${title}</div>
+            <div style="font-size:13px;color:var(--text-muted);max-width:280px;margin-top:4px;">${msg}</div>
+        </div>
+    `;
+}
+
+init();
+</script>
+<script src="js/i18n.js"></script>
+</body>
+</html>

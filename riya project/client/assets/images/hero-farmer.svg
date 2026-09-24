@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+    <!-- Background circle -->
+    <circle cx="200" cy="200" r="180" fill="#e8f5e9" opacity="0.5"/>
+    
+    <!-- Sun -->
+    <circle cx="300" cy="80" r="40" fill="#ffa726" opacity="0.3"/>
+    
+    <!-- Ground -->
+    <rect x="50" y="280" width="300" height="20" rx="10" fill="#4caf50" opacity="0.3"/>
+    
+    <!-- Farmer character -->
+    <!-- Body -->
+    <rect x="170" y="200" width="60" height="80" rx="10" fill="#2e7d32"/>
+    
+    <!-- Head -->
+    <circle cx="200" cy="170" r="35" fill="#ffccbc"/>
+    
+    <!-- Hat -->
+    <rect x="165" y="140" width="70" height="15" rx="3" fill="#8d6e63"/>
+    <rect x="180" y="125" width="40" height="20" rx="3" fill="#8d6e63"/>
+    
+    <!-- Eyes -->
+    <circle cx="190" cy="165" r="4" fill="#333"/>
+    <circle cx="210" cy="165" r="4" fill="#333"/>
+    
+    <!-- Smile -->
+    <path d="M190 180 Q200 190 210 180" stroke="#333" stroke-width="2" fill="none"/>
+    
+    <!-- Arms -->
+    <rect x="140" y="210" width="30" height="12" rx="5" fill="#ffccbc"/>
+    <rect x="230" y="210" width="30" height="12" rx="5" fill="#ffccbc"/>
+    
+    <!-- Legs -->
+    <rect x="180" y="280" width="15" height="30" rx="5" fill="#5d4037"/>
+    <rect x="205" y="280" width="15" height="30" rx="5" fill="#5d4037"/>
+    
+    <!-- Produce in basket -->
+    <circle cx="140" cy="250" r="12" fill="#e53935"/>
+    <circle cx="155" cy="245" r="10" fill="#ff9800"/>
+    <circle cx="130" cy="245" r="10" fill="#4caf50"/>
+    <circle cx="148" cy="235" r="8" fill="#f44336"/>
+    
+    <!-- Farm produce elements -->
+    <!-- Carrot -->
+    <g transform="translate(260, 240)">
+        <polygon points="0,0 -6,20 6,20" fill="#ff6f00"/>
+        <rect x="-2" y="-12" width="4" height="15" fill="#4caf50"/>
+    </g>
+    
+    <!-- Leaf -->
+    <g transform="translate(280, 210)">
+        <ellipse cx="0" cy="0" rx="12" ry="18" fill="#4caf50" transform="rotate(-30)"/>
+        <ellipse cx="0" cy="0" rx="12" ry="18" fill="#66bb6a" transform="rotate(30)"/>
+    </g>
+    
+    <!-- Decorative elements -->
+    <circle cx="100" cy="180" r="6" fill="#4caf50" opacity="0.3"/>
+    <circle cx="320" cy="200" r="8" fill="#4caf50" opacity="0.2"/>
+    <circle cx="80" cy="250" r="5" fill="#4caf50" opacity="0.2"/>
+    <circle cx="340" cy="260" r="4" fill="#4caf50" opacity="0.3"/>
+</svg>

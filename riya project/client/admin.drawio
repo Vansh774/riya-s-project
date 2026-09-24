@@ -1,0 +1,147 @@
+<mxfile host="app.diagrams.net" modified="2026-08-22T04:30:00.000Z" agent="FreshField" version="21.0.0" type="device">
+  <diagram id="admin-dfd-clean" name="Admin Data Flow Diagram">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="980" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Top Header Title -->
+        <mxCell id="title_banner" value="FreshField — Administrator Data Flow Diagram (DFD)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=none;fontColor=#FFFFFF;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1320" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- SINGLE EXTERNAL ENTITY: ADMIN (Left Side)                    -->
+        <!-- ============================================================ -->
+        <mxCell id="entity_admin" value="&lt;b style=&quot;font-size:16px;&quot;&gt;ADMINISTRATOR&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;&quot;&gt;(Store / System Admin)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F1F5F9;strokeColor=#1E293B;strokeWidth=2;fontColor=#0F172A;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="160" height="780" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 1.0: ADMIN LOGIN & AUTHENTICATION                    -->
+        <!-- ============================================================ -->
+        <mxCell id="p1" value="&lt;b&gt;1.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Admin Login &amp;&lt;br&gt;Authentication&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="110" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="D1: Users Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="125" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 1.0 -->
+        <mxCell id="arr_a_p1" value="Enters Admin Credentials" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.06;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p1_a" value="Grants Admin Session &amp; Permissions" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.09;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p1" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p1_d1" value="Verify Admin Role &amp; Password" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p1" target="d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 2.0: MANAGE PRODUCTS & INVENTORY                     -->
+        <!-- ============================================================ -->
+        <mxCell id="p2" value="&lt;b&gt;2.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Manage Products &amp;&lt;br&gt;Stock Inventory&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="D2: Products Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="265" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 2.0 -->
+        <mxCell id="arr_a_p2" value="Adds New Produce, Sets Price &amp; Updates Stock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.23;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p2_a" value="Displays Product List &amp; Low Stock Alerts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.26;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p2" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p2_d2" value="Insert / Update / Delete Product Records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p2" target="d2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 3.0: MANAGE CATEGORIES                               -->
+        <!-- ============================================================ -->
+        <mxCell id="p3" value="&lt;b&gt;3.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Manage Produce&lt;br&gt;Categories&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="390" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 3.0 -->
+        <mxCell id="arr_a_p3" value="Adds or Modifies Categories (Vegetables, Fruits, etc.)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.40;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p3_a" value="Confirms Category Changes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.43;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p3" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p3_d2" value="Save Category Updates to Products" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p3" target="d2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 4.0: PROCESS ORDERS & UPDATE STATUS                  -->
+        <!-- ============================================================ -->
+        <mxCell id="p4" value="&lt;b&gt;4.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Process &amp; Update&lt;br&gt;Customer Orders&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="530" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" value="D4: Orders Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="545" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 4.0 -->
+        <mxCell id="arr_a_p4" value="Updates Status (Processing, Shipped, Delivered)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.57;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p4_a" value="Displays Customer Order List &amp; Details" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.60;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p4" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p4_d4" value="Read All Orders / Update Order Status" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p4" target="d4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 5.0: MANAGE USERS & CUSTOMERS                        -->
+        <!-- ============================================================ -->
+        <mxCell id="p5" value="&lt;b&gt;5.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Manage Customer&lt;br&gt;Accounts&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="670" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 5.0 -->
+        <mxCell id="arr_a_p5" value="Inspects Customer Profiles &amp; Addresses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.74;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p5_a" value="Displays User Accounts &amp; Roles" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.77;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p5" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p5_d1" value="Read / Manage User Records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p5" target="d1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1070" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PROCESS 6.0: DASHBOARD ANALYTICS & REPORTS                   -->
+        <!-- ============================================================ -->
+        <mxCell id="p6" value="&lt;b&gt;6.0&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;Dashboard Analytics&lt;br&gt;&amp; Reports&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E293B;strokeWidth=2;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="500" y="810" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d5" value="D5: Reviews Table" style="shape=partialRectangle;top=0;bottom=0;left=1;right=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="960" y="825" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows for Process 6.0 -->
+        <mxCell id="arr_a_p6" value="Requests Sales, Revenue &amp; Review Metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.91;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1E293B;strokeWidth=2;fontColor=#1E293B;fontSize=11;fontStyle=1;" edge="1" parent="1" source="entity_admin" target="p6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p6_a" value="Generates Revenue Graphs &amp; Feedback Logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.94;entryDx=0;entryDy=0;strokeColor=#4338CA;strokeWidth=2;dashed=1;fontColor=#4338CA;fontSize=11;fontStyle=1;" edge="1" parent="1" source="p6" target="entity_admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_p6_d5" value="Aggregate Orders &amp; Product Ratings" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontSize=11;" edge="1" parent="1" source="p6" target="d5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

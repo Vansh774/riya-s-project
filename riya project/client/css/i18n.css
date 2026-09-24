@@ -1,0 +1,127 @@
+/* FreshField Multi-Language Switcher Styling */
+
+.freshfield-lang-dropdown {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    background: #FFFFFF !important;
+    border: 1.5px solid #15803D !important;
+    border-radius: 24px !important;
+    padding: 6px 14px !important;
+    box-shadow: 0 2px 8px rgba(21, 128, 61, 0.12) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    font-family: inherit !important;
+    position: relative !important;
+    user-select: none !important;
+    z-index: 1000 !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+.freshfield-lang-dropdown:hover {
+    border-color: #166534 !important;
+    box-shadow: 0 4px 14px rgba(21, 128, 61, 0.22) !important;
+    transform: translateY(-1px) !important;
+}
+
+.freshfield-lang-dropdown i {
+    color: #15803D !important;
+    font-size: 15px !important;
+}
+
+.freshfield-lang-select {
+    border: none !important;
+    background: transparent !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #14532D !important;
+    cursor: pointer !important;
+    outline: none !important;
+    font-family: inherit !important;
+    padding-right: 4px !important;
+}
+
+.freshfield-lang-select option {
+    background: #FFFFFF !important;
+    color: #1F2937 !important;
+    font-weight: 600 !important;
+    padding: 8px !important;
+}
+
+/* Floating Quick Language Switcher (Always accessible anywhere on every page) */
+.freshfield-floating-lang-pill {
+    position: fixed !important;
+    bottom: 22px !important;
+    left: 22px !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1.5px solid rgba(21, 128, 61, 0.4) !important;
+    border-radius: 30px !important;
+    padding: 7px 16px !important;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+}
+
+.freshfield-floating-lang-pill:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 26px rgba(21, 128, 61, 0.25) !important;
+}
+
+.freshfield-floating-lang-pill i {
+    color: #15803D !important;
+    font-size: 16px !important;
+}
+
+.freshfield-floating-lang-pill select {
+    border: none !important;
+    background: transparent !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #14532D !important;
+    cursor: pointer !important;
+    outline: none !important;
+    font-family: inherit !important;
+}
+
+/* Hide Google Translate top banner if loaded */
+.goog-te-banner-frame.skiptranslate, 
+.goog-te-banner-frame {
+    display: none !important;
+}
+body {
+    top: 0px !important;
+}
+#goog-gt-tt, .goog-te-balloon-frame {
+    display: none !important;
+}
+.goog-text-highlight {
+    background: none !important;
+    box-shadow: none !important;
+}
+.skiptranslate:not(.freshfield-lang-dropdown):not(.freshfield-floating-lang-pill) {
+    display: none !important;
+}
+#google_translate_element {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .freshfield-lang-dropdown {
+        padding: 4px 10px !important;
+        gap: 5px !important;
+    }
+    .freshfield-lang-select {
+        font-size: 12px !important;
+    }
+    .freshfield-floating-lang-pill {
+        bottom: 14px !important;
+        left: 14px !important;
+        padding: 5px 12px !important;
+    }
+}
