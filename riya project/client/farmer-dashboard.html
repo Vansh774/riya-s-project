@@ -677,7 +677,7 @@
            ============================================================ */
         .dashboard-main-grid {
             display: grid;
-            grid-template-columns: 1.75fr 1fr;
+            grid-template-columns: 1fr;
             gap: 24px;
         }
 
@@ -892,9 +892,14 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 10px 0;
+            padding: 12px 6px;
             border-bottom: 1px solid var(--beige);
             transition: background var(--t-fast);
+            border-radius: var(--radius-sm);
+        }
+
+        .order-row-item:hover {
+            background: rgba(46, 125, 50, 0.04);
         }
 
         .order-row-item:last-child {
@@ -1227,14 +1232,41 @@
             background: var(--cream-light);
             border: 1px solid var(--beige-mid);
             border-radius: var(--radius-lg);
-            overflow: hidden;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
         }
 
         .orders-table {
             width: 100%;
+            min-width: 600px;
             border-collapse: collapse;
             text-align: left;
             font-size: 13px;
+        }
+
+        @media (max-width: 640px) {
+            .order-row-item {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 12px 4px;
+            }
+            .order-info {
+                flex: 1 1 calc(100% - 60px);
+            }
+            .order-status-wrap {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-left: 56px;
+                text-align: left;
+                margin-top: 4px;
+            }
+            .order-amt-txt {
+                margin-top: 0;
+                font-size: 14px;
+            }
         }
 
         .orders-table th {
@@ -1953,6 +1985,15 @@
                     <span>Orders</span>
                     <span class="nav-badge" id="pending-badge" style="display:none;">0</span>
                 </a>
+                <a href="#" data-page="messages">
+                    <i class="fas fa-comments"></i>
+                    <span>Messages</span>
+                    <span class="nav-badge" id="farmer-msg-badge" style="display:none; background:#355C24; color:white;">0</span>
+                </a>
+                <a href="#" data-page="product-requests">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Product Requests</span>
+                </a>
                 <a href="#" data-page="categories">
                     <i class="fas fa-tags"></i>
                     <span>Categories</span>
@@ -2205,74 +2246,7 @@
                             </div>
                         </div>
 
-                        <!-- Right Column: Recent Orders & Activity -->
-                        <div>
-                            <!-- Recent Orders -->
-                            <div class="card-box">
-                                <div class="card-box-header">
-                                    <h2 class="card-box-title">Recent Orders</h2>
-                                    <a href="#" onclick="farmer.showPage('orders')" class="card-box-link">View All</a>
-                                </div>
 
-                                <div class="recent-orders-list" id="recent-orders-container">
-                                    <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">
-                                        <i class="fas fa-spinner fa-spin" style="margin-right: 6px;"></i> Loading recent orders...
-                                    </div>
-                                </div>
-
-                                <div style="text-align: right; margin-top: 14px;">
-                                    <a href="#" onclick="farmer.showPage('orders')" class="card-box-link">View all
-                                        orders &rarr;</a>
-                                </div>
-                            </div>
-
-                            <!-- Activity Overview -->
-                            <div class="card-box">
-                                <div class="card-box-header">
-                                    <h3 class="card-box-title">Activity Overview</h3>
-                                    <a href="#" onclick="farmer.showPage('orders')" class="card-box-link">View All</a>
-                                </div>
-
-                                <div class="activity-grid">
-                                    <div class="activity-mini-card">
-                                        <div class="act-icon-box" style="background:#EAF0DF;color:#355C24;"><i
-                                                class="fas fa-users"></i></div>
-                                        <div>
-                                            <div class="act-num" id="act-customers">0</div>
-                                            <div class="act-lbl">Total Customers</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="activity-mini-card">
-                                        <div class="act-icon-box" style="background:#FCECDD;color:#F28C28;"><i
-                                                class="fas fa-shopping-bag"></i></div>
-                                        <div>
-                                            <div class="act-num" id="act-orders-today">0</div>
-                                            <div class="act-lbl">Orders Today</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="activity-mini-card">
-                                        <div class="act-icon-box" style="background:#E2EFCB;color:#557A2B;"><i
-                                                class="fas fa-basket-shopping"></i></div>
-                                        <div>
-                                            <div class="act-num" id="act-products">0</div>
-                                            <div class="act-lbl">Active Products</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="activity-mini-card">
-                                        <div class="act-icon-box" style="background:#FBF5E5;color:#D97706;"><i
-                                                class="fas fa-star"></i></div>
-                                        <div>
-                                            <div class="act-num" id="act-reviews">0</div>
-                                            <div class="act-lbl">Customer Reviews</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
 
                     </div>
 
@@ -2375,11 +2349,16 @@
 
                     <!-- Product Form Section -->
                     <div class="form-card" id="product-form" style="margin-top:30px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--beige); padding-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--beige); padding-bottom:12px; flex-wrap:wrap; gap:10px;">
                             <h3 id="product-form-title" style="font-family:var(--font-serif); font-size:22px; color:var(--text-dark);">Add New Product</h3>
-                            <button type="button" onclick="farmer.resetProductForm()" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:13px;">
-                                <i class="fas fa-times"></i> Clear Form
-                            </button>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <button type="button" onclick="farmer.showPage('product-requests')" style="background:var(--green-pale); border:1px solid var(--green-secondary); color:var(--green-primary); border-radius:var(--radius-pill); padding:6px 14px; cursor:pointer; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-plus-circle"></i> Request Unlisted Crop
+                                </button>
+                                <button type="button" onclick="farmer.resetProductForm()" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:13px;">
+                                    <i class="fas fa-times"></i> Clear Form
+                                </button>
+                            </div>
                         </div>
                         <form id="product-form-fields" onsubmit="event.preventDefault(); farmer.saveProduct();">
                             <input type="hidden" id="product-id">
@@ -2407,6 +2386,7 @@
                                 <div class="form-group">
                                     <label for="product-price">Price (₹) *</label>
                                     <input type="number" step="0.01" id="product-price" class="form-control" placeholder="50.00" required>
+                                    <div id="product-price-hint" class="ff-price-hint"></div>
                                 </div>
 
                                 <div class="form-group">
@@ -2817,6 +2797,18 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="profile-farmer-id">Farmer Identification (FID)</label>
+                                    <input type="text" id="profile-farmer-id" class="form-control" readonly style="background:var(--cream); font-weight:700; color:var(--green-forest);" value="FID-2024-8841">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Government Kisan Card Status</label>
+                                    <div style="display:flex; align-items:center; gap:8px; height:42px; padding:0 14px; background:#ECFDF5; border:1px solid #A7F3D0; border-radius:var(--radius-sm); color:#047857; font-weight:600; font-size:13px;">
+                                        <i class="fas fa-check-circle" style="color:#10B981;"></i> Kisan Card Verified (Active)
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="profile-email">Email Address</label>
                                     <input type="email" id="profile-email" class="form-control" readonly style="background:var(--cream);">
                                 </div>
@@ -2864,6 +2856,97 @@
                     </div>
                 </div>
 
+                <!-- PAGE: MESSAGES (Customer ↔ Farmer Conversations) -->
+                <div id="page-messages" class="page-content">
+                    <div class="products-page-header">
+                        <div>
+                            <h2 style="font-family:var(--font-serif); font-size:26px; color:var(--text-dark); margin-bottom:4px;">Customer Messages & Negotiations</h2>
+                            <p style="font-size:13.5px; color:var(--text-muted);">Direct messages and price bargaining inquiries from customers for your listed harvest.</p>
+                        </div>
+                        <button type="button" class="btn-balance-details" onclick="farmer.loadMessages()" style="background:var(--white); padding:8px 16px; border-radius:var(--radius-pill); cursor:pointer;">
+                            <i class="fas fa-sync-alt"></i> Refresh Messages
+                        </button>
+                    </div>
+                    <div id="farmer-conversations-container" style="margin-top:20px;">
+                        <!-- Rendered by FFMessaging.loadConversations -->
+                    </div>
+                </div>
+
+                <!-- PAGE: PRODUCT REQUESTS (Farmer to Admin) -->
+                <div id="page-product-requests" class="page-content">
+                    <div class="products-page-header">
+                        <div>
+                            <h2 style="font-family:var(--font-serif); font-size:26px; color:var(--text-dark); margin-bottom:4px;">Product Catalog Requests</h2>
+                            <p style="font-size:13.5px; color:var(--text-muted);">Request new unlisted crops, vegetables, or fruits to be approved by FreshField Administration.</p>
+                        </div>
+                    </div>
+
+                    <!-- Submission Form Card -->
+                    <div class="form-card" style="margin-top:16px;">
+                        <h3 style="font-family:var(--font-serif); font-size:20px; color:var(--text-dark); margin-bottom:14px; border-bottom:1px solid var(--beige); padding-bottom:10px;">
+                            <i class="fas fa-plus-circle" style="color:var(--green-secondary); margin-right:8px;"></i> Submit New Produce Request
+                        </h3>
+                        <form id="farmer-product-request-form" onsubmit="event.preventDefault(); farmer.handleProductRequestSubmit();">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="req-product-name">Produce Name *</label>
+                                    <input type="text" id="req-product-name" class="form-control" placeholder="e.g. Dragon Fruit, Moringa, Broccoli" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="req-category">Category *</label>
+                                    <select id="req-category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Vegetables">Vegetables</option>
+                                        <option value="Fruits">Fruits</option>
+                                        <option value="Leafy Greens">Leafy Greens</option>
+                                        <option value="Organic">Organic</option>
+                                        <option value="Dairy & Farm Fresh">Dairy & Farm Fresh</option>
+                                        <option value="Grains & Pulses">Grains & Pulses</option>
+                                        <option value="Spices & Herbs">Spices & Herbs</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="req-unit">Measurement Unit *</label>
+                                    <select id="req-unit" class="form-control" required>
+                                        <option value="kg">Per kg</option>
+                                        <option value="piece">Per piece</option>
+                                        <option value="bunch">Per bunch</option>
+                                        <option value="dozen">Per dozen</option>
+                                        <option value="litre">Per litre</option>
+                                        <option value="box">Per box</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="req-min-price">Suggested Minimum Price (₹)</label>
+                                    <input type="number" step="0.01" id="req-min-price" class="form-control" placeholder="e.g. 40.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="req-max-price">Suggested Maximum Price (₹)</label>
+                                    <input type="number" step="0.01" id="req-max-price" class="form-control" placeholder="e.g. 90.00">
+                                </div>
+                                <div class="form-group full">
+                                    <label for="req-reason">Reason for Request *</label>
+                                    <textarea id="req-reason" class="form-control" rows="3" placeholder="Explain why you wish to list this crop, expected harvest date, and local cultivation details..." required></textarea>
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
+                                <button type="reset" class="sidebar-logout" style="width:auto; padding:10px 20px; background:white; border:1px solid var(--beige-mid); color:var(--text-muted);">Reset</button>
+                                <button type="submit" id="btn-submit-crop-req" class="btn-add-product" style="padding:10px 24px;">Submit for Admin Review</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- My Requests History -->
+                    <div style="margin-top:30px;">
+                        <h3 style="font-family:var(--font-serif); font-size:20px; color:var(--text-dark); margin-bottom:14px;">
+                            <i class="fas fa-list-check" style="color:var(--green-primary); margin-right:8px;"></i> My Submitted Requests
+                        </h3>
+                        <div id="farmer-requests-container">
+                            <!-- Rendered by FFProductRequests.renderFarmerRequests -->
+                        </div>
+                    </div>
+                </div>
+
             </main>
         </div>
 
@@ -2877,6 +2960,7 @@
     <script src="js/toast.js?v=2.0.3"></script>
     <script src="js/api.js?v=2.0.3"></script>
     <script src="js/auth.js?v=2.0.3"></script>
+    <script src="js/features.js?v=2.0.3"></script>
     <script src="js/farmer.js?v=2.0.3"></script>
 
     <script>

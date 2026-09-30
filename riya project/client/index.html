@@ -2941,11 +2941,7 @@
             }
             const total = cart.getTotal();
             if (total < 600) {
-                if (typeof toast !== 'undefined') {
-                    toast.error('Cart must having 600 INR to buy');
-                } else {
-                    alert('Cart must having 600 INR to buy');
-                }
+                alert("Cart must have at least ₹600 to buy.");
                 return;
             }
             const user = auth.getCurrentUser();

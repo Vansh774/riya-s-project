@@ -5,45 +5,45 @@ const { pool } = require('../config/database');
 // ==========================================
 const getAdminStats = async (req, res) => {
     try {
-        // Users counts by role and status (excluding admin accounts)
-        const [userCounts] = await pool.query(`
-            SELECT 
-                COUNT(*) as total_users,
-                SUM(CASE WHEN role = 'farmer' THEN 1 ELSE 0 END) as total_farmers,
-                SUM(CASE WHEN role = 'customer' THEN 1 ELSE 0 END) as total_customers,
-                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
-                SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_users,
-                SUM(CASE WHEN status = 'banned' THEN 1 ELSE 0 END) as banned_users,
-                SUM(CASE WHEN role = 'farmer' AND is_verified = 1 THEN 1 ELSE 0 END) as verified_farmers
-            FROM users
-            WHERE role != 'admin'
-        `);
-
-        // Reports counts
-        const [reportCounts] = await pool.query(`
-            SELECT 
-                COUNT(*) as total_reports,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_reports,
-                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed_reports,
-                SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_reports,
-                SUM(CASE WHEN status = 'dismissed' THEN 1 ELSE 0 END) as dismissed_reports
-            FROM farmer_reports
-        `);
-
-        // Total orders & revenue
-        const [orderStats] = await pool.query(`
-            SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(total_amount), 0) as total_gmv
-            FROM orders
-        `);
-
-        // Recent moderation actions count (last 7 days)
-        const [recentActions] = await pool.query(`
-            SELECT COUNT(*) as count 
-            FROM admin_action_logs 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        `);
+        const [
+            [userCounts],
+            [reportCounts],
+            [orderStats],
+            [recentActions]
+        ] = await Promise.all([
+            pool.query(`
+                SELECT 
+                    COUNT(*) as total_users,
+                    SUM(CASE WHEN role = 'farmer' THEN 1 ELSE 0 END) as total_farmers,
+                    SUM(CASE WHEN role = 'customer' THEN 1 ELSE 0 END) as total_customers,
+                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
+                    SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_users,
+                    SUM(CASE WHEN status = 'banned' THEN 1 ELSE 0 END) as banned_users,
+                    SUM(CASE WHEN role = 'farmer' AND is_verified = 1 THEN 1 ELSE 0 END) as verified_farmers
+                FROM users
+                WHERE role != 'admin'
+            `),
+            pool.query(`
+                SELECT 
+                    COUNT(*) as total_reports,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_reports,
+                    SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed_reports,
+                    SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_reports,
+                    SUM(CASE WHEN status = 'dismissed' THEN 1 ELSE 0 END) as dismissed_reports
+                FROM farmer_reports
+            `),
+            pool.query(`
+                SELECT 
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(total_amount), 0) as total_gmv
+                FROM orders
+            `),
+            pool.query(`
+                SELECT COUNT(*) as count 
+                FROM admin_action_logs 
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            `)
+        ]);
 
         res.json({
             success: true,

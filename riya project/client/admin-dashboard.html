@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,9 @@
     <!-- Google Fonts: Playfair Display + Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -17,6 +20,7 @@
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/i18n.css">
 </head>
+
 <body>
 
     <div class="admin-app-layout">
@@ -63,6 +67,13 @@
                     <span>Audit Logs</span>
                 </a>
 
+                <span class="nav-section-label">Catalog &amp; Marketplace</span>
+                <a class="admin-nav-item" onclick="switchAdminTab('product-requests')">
+                    <i class="fa-solid fa-boxes-packing nav-icon"></i>
+                    <span>Product Requests</span>
+                    <span class="nav-counter-pill alert" id="nav-count-product-requests" style="display: none;">0</span>
+                </a>
+
                 <span class="nav-section-label">Storefront</span>
                 <a href="index.html" target="_blank" class="admin-nav-item">
                     <i class="fa-solid fa-store nav-icon"></i>
@@ -78,7 +89,8 @@
                         <div class="admin-name" id="admin-display-name">Administrator</div>
                         <div class="admin-role">Super Administrator</div>
                     </div>
-                    <button type="button" class="btn-sidebar-logout" onclick="handleAdminLogout()" title="Sign out of Admin Console">
+                    <button type="button" class="btn-sidebar-logout" onclick="handleAdminLogout()"
+                        title="Sign out of Admin Console">
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </button>
                 </div>
@@ -93,15 +105,16 @@
             <!-- Sticky Topbar -->
             <header class="admin-topbar">
                 <div class="topbar-search-box">
-                    <i class="fa-solid fa-magnifying-glass topbar-search-icon"></i>
-                    <input type="text" id="global-admin-search" class="topbar-search-input" placeholder="Search farmers, customers, farmer ID, or complaints..." oninput="handleGlobalSearch(this.value)">
+
+
                 </div>
 
                 <div class="topbar-actions-right">
                     <!-- Language Selector in Navigation -->
                     <div class="freshfield-lang-dropdown" title="Change Language / भाषा बदलें / ભાષા બદલો">
                         <i class="fas fa-globe"></i>
-                        <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)" aria-label="Select Language">
+                        <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)"
+                            aria-label="Select Language">
                             <option value="en">English</option>
                             <option value="hi">हिन्दी</option>
                             <option value="gu">ગુજરાતી</option>
@@ -113,12 +126,14 @@
                         <span>System Operational</span>
                     </div>
 
-                    <button type="button" class="btn-topbar-action" onclick="refreshCurrentTab()" title="Refresh live data">
+                    <button type="button" class="btn-topbar-action" onclick="refreshCurrentTab()"
+                        title="Refresh live data">
                         <i class="fa-solid fa-rotate-right"></i>
                         <span>Refresh</span>
                     </button>
 
-                    <button type="button" class="btn-topbar-action primary" onclick="switchAdminTab('reports')" title="Review pending customer complaints">
+                    <button type="button" class="btn-topbar-action primary" onclick="switchAdminTab('reports')"
+                        title="Review pending customer complaints">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <span id="topbar-pending-btn-txt">Review Reports</span>
                     </button>
@@ -135,7 +150,8 @@
                     <div class="content-header-row">
                         <div class="content-title-box">
                             <h1>Executive Moderation Dashboard</h1>
-                            <p>Real-time platform activity, trust &amp; safety enforcement, and farmer verification metrics.</p>
+                            <p>Real-time platform activity, trust &amp; safety enforcement, and farmer verification
+                                metrics.</p>
                         </div>
                         <div class="header-action-group">
                             <button type="button" class="btn-topbar-action" onclick="switchAdminTab('farmers')">
@@ -156,7 +172,8 @@
                             </div>
                             <div class="stat-card-value" id="stat-total-users">0</div>
                             <div class="stat-card-sub">
-                                <span id="stat-farmers-sub">0</span> Farmers • <span id="stat-customers-sub">0</span> Customers
+                                <span id="stat-farmers-sub">0</span> Farmers • <span id="stat-customers-sub">0</span>
+                                Customers
                             </div>
                         </div>
 
@@ -193,7 +210,9 @@
                             </div>
                         </div>
 
-                        <div class="admin-stat-card" style="border: 1.5px solid #FCD34D; background: #FFFDF5; cursor: pointer;" onclick="switchAdminTab('reports')">
+                        <div class="admin-stat-card"
+                            style="border: 1.5px solid #FCD34D; background: #FFFDF5; cursor: pointer;"
+                            onclick="switchAdminTab('reports')">
                             <div class="stat-card-header">
                                 <span class="stat-card-label" style="color: #B45309;">Pending Reports</span>
                                 <div class="stat-icon-wrap amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -215,43 +234,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Split Panels Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
-                        
-                        <!-- Panel Left: Latest Customer Grievances -->
-                        <div class="admin-card-panel" style="margin-bottom: 0;">
-                            <div class="panel-header-strip">
-                                <span class="panel-title-text">
-                                    <i class="fa-solid fa-flag" style="color: #F59E0B;"></i>
-                                    Recent Customer Complaints
-                                </span>
-                                <a href="#" onclick="switchAdminTab('reports'); return false;" style="font-size: 12px; color: var(--green-primary); font-weight: 600;">View All Reports &rarr;</a>
-                            </div>
-                            <div id="overview-recent-reports" style="padding: 16px;">
-                                <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Loading complaints...
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Panel Right: Recent Moderation Audit Timeline -->
-                        <div class="admin-card-panel" style="margin-bottom: 0;">
-                            <div class="panel-header-strip">
-                                <span class="panel-title-text">
-                                    <i class="fa-solid fa-shield-halved" style="color: var(--green-primary);"></i>
-                                    Recent Moderation Actions
-                                </span>
-                                <a href="#" onclick="switchAdminTab('logs'); return false;" style="font-size: 12px; color: var(--green-primary); font-weight: 600;">View Full Log &rarr;</a>
-                            </div>
-                            <div id="overview-recent-logs" style="padding: 16px;">
-                                <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Loading audit trail...
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
                 </section>
 
 
@@ -262,7 +244,8 @@
                     <div class="content-header-row">
                         <div class="content-title-box">
                             <h1>Farmers Management &amp; KYC Verification</h1>
-                            <p>Supervise agricultural producers, manage Kisan Card verification, inspect complaints, and enforce disciplinary suspensions or bans.</p>
+                            <p>Supervise agricultural producers, manage Kisan Card verification, inspect complaints, and
+                                enforce disciplinary suspensions or bans.</p>
                         </div>
                     </div>
 
@@ -275,7 +258,8 @@
                             <div class="panel-controls-row">
                                 <div class="search-field-wrap">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="farmers-search-input" class="panel-search-field" placeholder="Search farmers..." oninput="debounceFilterFarmers()">
+                                    <input type="text" id="farmers-search-input" class="panel-search-field"
+                                        placeholder="Search farmers..." oninput="debounceFilterFarmers()">
                                 </div>
                                 <select id="farmers-status-filter" class="panel-filter-select" onchange="loadFarmers()">
                                     <option value="all">All Statuses</option>
@@ -283,7 +267,8 @@
                                     <option value="suspended">Suspended Only</option>
                                     <option value="banned">Banned Only</option>
                                 </select>
-                                <button type="button" class="btn-topbar-action" onclick="loadFarmers()" title="Refresh farmers">
+                                <button type="button" class="btn-topbar-action" onclick="loadFarmers()"
+                                    title="Refresh farmers">
                                     <i class="fa-solid fa-rotate-right"></i>
                                 </button>
                             </div>
@@ -305,7 +290,8 @@
                                 </thead>
                                 <tbody id="farmers-table-body">
                                     <tr>
-                                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                        <td colspan="8"
+                                            style="text-align: center; padding: 40px; color: var(--text-muted);">
                                             <i class="fa-solid fa-circle-notch fa-spin"></i> Loading farmer records...
                                         </td>
                                     </tr>
@@ -323,7 +309,8 @@
                     <div class="content-header-row">
                         <div class="content-title-box">
                             <h1>Customers Management</h1>
-                            <p>Monitor buyer accounts, order activity, enforce suspensions or bans if policy violations occur.</p>
+                            <p>Monitor buyer accounts, order activity, enforce suspensions or bans if policy violations
+                                occur.</p>
                         </div>
                     </div>
 
@@ -336,15 +323,19 @@
                             <div class="panel-controls-row">
                                 <div class="search-field-wrap">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="customers-search-input" class="panel-search-field" placeholder="Search customers..." oninput="debounceFilterCustomers()">
+                                    <input type="text" id="customers-search-input" class="panel-search-field"
+                                        placeholder="Search customers..." oninput="debounceFilterCustomers()">
                                 </div>
-                                <select id="customers-status-filter" class="panel-filter-select" onchange="loadCustomers()">
+
+                                <select id="customers-status-filter" class="panel-filter-select"
+                                    onchange="loadCustomers()">
                                     <option value="all">All Statuses</option>
                                     <option value="active">Active Only</option>
                                     <option value="suspended">Suspended Only</option>
                                     <option value="banned">Banned Only</option>
                                 </select>
-                                <button type="button" class="btn-topbar-action" onclick="loadCustomers()" title="Refresh customers">
+                                <button type="button" class="btn-topbar-action" onclick="loadCustomers()"
+                                    title="Refresh customers">
                                     <i class="fa-solid fa-rotate-right"></i>
                                 </button>
                             </div>
@@ -365,7 +356,8 @@
                                 </thead>
                                 <tbody id="customers-table-body">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                        <td colspan="7"
+                                            style="text-align: center; padding: 40px; color: var(--text-muted);">
                                             <i class="fa-solid fa-circle-notch fa-spin"></i> Loading customer records...
                                         </td>
                                     </tr>
@@ -383,7 +375,8 @@
                     <div class="content-header-row">
                         <div class="content-title-box">
                             <h1>Customer Grievances &amp; Farmer Reports</h1>
-                            <p>Review filed complaints by consumers against agricultural producers. Enforce temporary suspension by days, bans, or official warnings.</p>
+                            <p>Review filed complaints by consumers against agricultural producers. Enforce temporary
+                                suspension by days, bans, or official warnings.</p>
                         </div>
                     </div>
 
@@ -396,7 +389,8 @@
                             <div class="panel-controls-row">
                                 <div class="search-field-wrap">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="reports-search-input" class="panel-search-field" placeholder="Search complaints..." oninput="debounceFilterReports()">
+                                    <input type="text" id="reports-search-input" class="panel-search-field"
+                                        placeholder="Search complaints..." oninput="debounceFilterReports()">
                                 </div>
                                 <select id="reports-status-filter" class="panel-filter-select" onchange="loadReports()">
                                     <option value="all">All Reports</option>
@@ -404,7 +398,8 @@
                                     <option value="resolved">Resolved</option>
                                     <option value="dismissed">Dismissed</option>
                                 </select>
-                                <button type="button" class="btn-topbar-action" onclick="loadReports()" title="Refresh complaints">
+                                <button type="button" class="btn-topbar-action" onclick="loadReports()"
+                                    title="Refresh complaints">
                                     <i class="fa-solid fa-rotate-right"></i>
                                 </button>
                             </div>
@@ -426,7 +421,8 @@
                     <div class="content-header-row">
                         <div class="content-title-box">
                             <h1>Moderation Audit Trail</h1>
-                            <p>Complete immutable chronological history of all disciplinary actions (suspensions, bans, warnings, and reinstatements) enacted by administrators.</p>
+                            <p>Complete immutable chronological history of all disciplinary actions (suspensions, bans,
+                                warnings, and reinstatements) enacted by administrators.</p>
                         </div>
                     </div>
 
@@ -456,12 +452,54 @@
                                 </thead>
                                 <tbody id="logs-table-body">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                        <td colspan="7"
+                                            style="text-align: center; padding: 40px; color: var(--text-muted);">
                                             <i class="fa-solid fa-circle-notch fa-spin"></i> Loading audit logs...
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 6: PRODUCT REQUESTS (FARMER UNLISTED CROPS)
+                     ========================================== -->
+                <section id="product-requests-tab" class="admin-tab-pane">
+                    <div class="content-header-row">
+                        <div class="content-title-box">
+                            <h1>Farmer Crop &amp; Produce Requests</h1>
+                            <p>Review new crop catalog requests submitted by farmers. Approving automatically registers
+                                the crop and enforces fair price caps.</p>
+                        </div>
+                        <button type="button" class="btn-topbar-action primary" onclick="loadAdminProductRequests()"
+                            title="Refresh requests">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh Requests
+                        </button>
+                    </div>
+
+                    <div class="admin-card-panel">
+                        <div class="panel-header-strip">
+                            <div class="panel-title-text">
+                                <i class="fa-solid fa-boxes-packing" style="color: var(--green-primary);"></i>
+                                Produce Catalog Proposals
+                            </div>
+                            <div class="panel-controls-row">
+                                <select id="admin-req-filter" class="panel-filter-select"
+                                    onchange="loadAdminProductRequests()">
+                                    <option value="">All Proposals</option>
+                                    <option value="pending" selected>Pending Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <div id="admin-requests-list">
+                                <!-- Loaded by FFProductRequests.renderAdminRequests -->
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -475,7 +513,8 @@
     <!-- ============================================================
          MODAL 1: SUSPEND ACCOUNT (WITH DAYS FIELD)
          ============================================================ -->
-    <div id="modal-suspend" class="admin-modal-backdrop" onclick="if(event.target===this) closeAdminModal('modal-suspend')">
+    <div id="modal-suspend" class="admin-modal-backdrop"
+        onclick="if(event.target===this) closeAdminModal('modal-suspend')">
         <div class="admin-modal-card">
             <div class="modal-header-box">
                 <div class="modal-title-wrap">
@@ -505,8 +544,9 @@
                     <label class="form-label-txt" for="suspend-days-input">
                         Suspension Duration (in Days) <span style="color: #DC2626;">*</span>
                     </label>
-                    <input type="number" id="suspend-days-input" class="form-input-control" min="1" max="365" value="7" required oninput="calculateSuspensionDate(this.value)">
-                    
+                    <input type="number" id="suspend-days-input" class="form-input-control" min="1" max="365" value="7"
+                        required oninput="calculateSuspensionDate(this.value)">
+
                     <div class="days-preset-pills">
                         <button type="button" class="btn-day-pill" onclick="setSuspensionDays(3)">3 Days</button>
                         <button type="button" class="btn-day-pill active" onclick="setSuspensionDays(7)">7 Days</button>
@@ -526,11 +566,14 @@
                     <label class="form-label-txt" for="suspend-reason-input">
                         Official Reason for Suspension <span style="color: #DC2626;">*</span>
                     </label>
-                    <textarea id="suspend-reason-input" class="form-input-control" placeholder="Specify violations, e.g. Customer grievance #12 for spoiled produce, multiple shipping delays..." required></textarea>
+                    <textarea id="suspend-reason-input" class="form-input-control"
+                        placeholder="Specify violations, e.g. Customer grievance #12 for spoiled produce, multiple shipping delays..."
+                        required></textarea>
                 </div>
 
                 <div class="modal-actions-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeAdminModal('modal-suspend')">Cancel</button>
+                    <button type="button" class="btn-modal-cancel"
+                        onclick="closeAdminModal('modal-suspend')">Cancel</button>
                     <button type="submit" id="btn-confirm-suspend" class="btn-modal-confirm suspend">
                         <i class="fa-solid fa-lock"></i>
                         <span>Enforce Suspension</span>
@@ -564,8 +607,10 @@
                 </div>
             </div>
 
-            <div style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Critical Warning:</strong> This account will be immediately locked out and prevented from signing in. All active product listings will be hidden.
+            <div
+                style="background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Critical Warning:</strong> This account will be
+                immediately locked out and prevented from signing in. All active product listings will be hidden.
             </div>
 
             <form onsubmit="event.preventDefault(); submitAccountBan();">
@@ -576,11 +621,14 @@
                     <label class="form-label-txt" for="ban-reason-input">
                         Official Ban Justification <span style="color: #DC2626;">*</span>
                     </label>
-                    <textarea id="ban-reason-input" class="form-input-control" placeholder="Specify severe violations (e.g. repeated fraud, unauthorized produce sales, severe harassment)..." required></textarea>
+                    <textarea id="ban-reason-input" class="form-input-control"
+                        placeholder="Specify severe violations (e.g. repeated fraud, unauthorized produce sales, severe harassment)..."
+                        required></textarea>
                 </div>
 
                 <div class="modal-actions-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeAdminModal('modal-ban')">Cancel</button>
+                    <button type="button" class="btn-modal-cancel"
+                        onclick="closeAdminModal('modal-ban')">Cancel</button>
                     <button type="submit" id="btn-confirm-ban" class="btn-modal-confirm ban">
                         <i class="fa-solid fa-user-slash"></i>
                         <span>Enforce Permanent Ban</span>
@@ -598,7 +646,8 @@
         <div class="admin-modal-card">
             <div class="modal-header-box">
                 <div class="modal-title-wrap">
-                    <h3 style="color: var(--green-primary);"><i class="fa-solid fa-triangle-exclamation"></i> Issue Official Disciplinary Warning</h3>
+                    <h3 style="color: var(--green-primary);"><i class="fa-solid fa-triangle-exclamation"></i> Issue
+                        Official Disciplinary Warning</h3>
                     <p>Send a formal warning to the farmer's account dashboard notification feed.</p>
                 </div>
                 <button type="button" class="modal-close-x" onclick="closeAdminModal('modal-warn')">
@@ -610,7 +659,8 @@
                 <div class="target-avatar-circle" id="warn-user-avatar">?</div>
                 <div class="target-info-wrap">
                     <div class="target-name-txt" id="warn-user-name">Farmer Name</div>
-                    <div class="target-role-badge" id="warn-user-warning-count" style="color: #D97706; font-weight: 600;">Current Warnings: 0</div>
+                    <div class="target-role-badge" id="warn-user-warning-count"
+                        style="color: #D97706; font-weight: 600;">Current Warnings: 0</div>
                 </div>
             </div>
 
@@ -621,9 +671,15 @@
                 <div class="form-group-block">
                     <label class="form-label-txt">Quick Presets</label>
                     <div class="days-preset-pills">
-                        <button type="button" class="btn-day-pill" onclick="setWarningPreset('Produce Quality Complaint: Customers reported produce quality not matching listed standards.')">Quality Issue</button>
-                        <button type="button" class="btn-day-pill" onclick="setWarningPreset('Delivery Timeline Notice: Multiple orders experienced dispatch delays without notice.')">Shipping Delay</button>
-                        <button type="button" class="btn-day-pill" onclick="setWarningPreset('Inaccurate Listing: Weight, variety or organic claims were found inaccurate.')">Inaccurate Listing</button>
+                        <button type="button" class="btn-day-pill"
+                            onclick="setWarningPreset('Produce Quality Complaint: Customers reported produce quality not matching listed standards.')">Quality
+                            Issue</button>
+                        <button type="button" class="btn-day-pill"
+                            onclick="setWarningPreset('Delivery Timeline Notice: Multiple orders experienced dispatch delays without notice.')">Shipping
+                            Delay</button>
+                        <button type="button" class="btn-day-pill"
+                            onclick="setWarningPreset('Inaccurate Listing: Weight, variety or organic claims were found inaccurate.')">Inaccurate
+                            Listing</button>
                     </div>
                 </div>
 
@@ -631,11 +687,14 @@
                     <label class="form-label-txt" for="warn-message-input">
                         Warning Message Text <span style="color: #DC2626;">*</span>
                     </label>
-                    <textarea id="warn-message-input" class="form-input-control" placeholder="Enter specific instructions and corrective actions required..." required></textarea>
+                    <textarea id="warn-message-input" class="form-input-control"
+                        placeholder="Enter specific instructions and corrective actions required..."
+                        required></textarea>
                 </div>
 
                 <div class="modal-actions-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeAdminModal('modal-warn')">Cancel</button>
+                    <button type="button" class="btn-modal-cancel"
+                        onclick="closeAdminModal('modal-warn')">Cancel</button>
                     <button type="submit" id="btn-confirm-warn" class="btn-modal-confirm warn">
                         <i class="fa-solid fa-paper-plane"></i>
                         <span>Issue Official Warning</span>
@@ -649,7 +708,8 @@
     <!-- ============================================================
          MODAL 4: DISMISS REPORT
          ============================================================ -->
-    <div id="modal-dismiss" class="admin-modal-backdrop" onclick="if(event.target===this) closeAdminModal('modal-dismiss')">
+    <div id="modal-dismiss" class="admin-modal-backdrop"
+        onclick="if(event.target===this) closeAdminModal('modal-dismiss')">
         <div class="admin-modal-card">
             <div class="modal-header-box">
                 <div class="modal-title-wrap">
@@ -668,12 +728,15 @@
                     <label class="form-label-txt" for="dismiss-notes-input">
                         Dismissal Justification Notes
                     </label>
-                    <textarea id="dismiss-notes-input" class="form-input-control" placeholder="E.g. Verified with delivery tracking that package was delivered in fresh condition; complaint unfounded."></textarea>
+                    <textarea id="dismiss-notes-input" class="form-input-control"
+                        placeholder="E.g. Verified with delivery tracking that package was delivered in fresh condition; complaint unfounded."></textarea>
                 </div>
 
                 <div class="modal-actions-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeAdminModal('modal-dismiss')">Cancel</button>
-                    <button type="submit" id="btn-confirm-dismiss" class="btn-modal-confirm" style="background: #4B5563;">
+                    <button type="button" class="btn-modal-cancel"
+                        onclick="closeAdminModal('modal-dismiss')">Cancel</button>
+                    <button type="submit" id="btn-confirm-dismiss" class="btn-modal-confirm"
+                        style="background: #4B5563;">
                         <span>Dismiss Complaint</span>
                     </button>
                 </div>
@@ -683,12 +746,16 @@
 
 
     <!-- Notification Toast Container -->
-    <div id="toast-container" style="position: fixed; top: 24px; right: 24px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; max-width: 380px;"></div>
+    <div id="toast-container"
+        style="position: fixed; top: 24px; right: 24px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; max-width: 380px;">
+    </div>
 
 
     <!-- ============================================================
          JAVASCRIPT ADMIN CONTROLLER LOGIC
          ============================================================ -->
+    <script src="js/api.js"></script>
+    <script src="js/features.js"></script>
     <script>
         // API Base URL
         const API_BASE = 'http://localhost:5000/api';
@@ -700,7 +767,7 @@
 
         try {
             currentUser = userStr ? JSON.parse(userStr) : null;
-        } catch (e) {}
+        } catch (e) { }
 
         // Enforce Admin Auth Guard
         if (!token || !currentUser || currentUser.role !== 'admin') {
@@ -716,13 +783,12 @@
             }
             // Initial calculations for suspension modal
             calculateSuspensionDate(7);
-            
-            // Load initial dashboard metrics & active tab data
-            loadStats();
-            loadFarmers();
-            loadReports();
-            loadCustomers();
-            loadLogs();
+
+            // Progressive non-blocking loading: load overview stats & feeds in parallel
+            Promise.allSettled([
+                loadStats(),
+                loadOverviewFeeds()
+            ]);
         });
 
         // Toast Helper
@@ -807,9 +873,17 @@
             if (tabName === 'customers') loadCustomers();
             if (tabName === 'reports') loadReports();
             if (tabName === 'logs') loadLogs();
+            if (tabName === 'product-requests') loadAdminProductRequests();
             if (tabName === 'overview') {
                 loadStats();
                 loadOverviewFeeds();
+            }
+        }
+
+        function loadAdminProductRequests() {
+            const filter = document.getElementById('admin-req-filter') ? document.getElementById('admin-req-filter').value : '';
+            if (typeof FFProductRequests !== 'undefined') {
+                FFProductRequests.renderAdminRequests('admin-requests-list', filter);
             }
         }
 
@@ -837,7 +911,7 @@
 
                 const pendingRep = s.reports.pending_reports || 0;
                 document.getElementById('stat-pending-reports').textContent = pendingRep;
-                
+
                 // Badges in sidebar and topbar
                 const repBadge = document.getElementById('nav-count-reports');
                 if (pendingRep > 0) {
@@ -851,6 +925,19 @@
 
                 document.getElementById('nav-count-farmers').textContent = s.users.total_farmers || 0;
                 document.getElementById('nav-count-customers').textContent = s.users.total_customers || 0;
+
+                // Check pending product requests count
+                try {
+                    const reqRes = await adminFetch('/features/admin/product-requests?status=pending');
+                    if (reqRes.ok && reqRes.data && reqRes.data.success && Array.isArray(reqRes.data.requests)) {
+                        const count = reqRes.data.requests.length;
+                        const reqBadge = document.getElementById('nav-count-product-requests');
+                        if (reqBadge) {
+                            reqBadge.textContent = count;
+                            reqBadge.style.display = count > 0 ? 'inline-block' : 'none';
+                        }
+                    }
+                } catch (e) { }
             }
         }
 
@@ -859,42 +946,46 @@
         // ==========================================
         async function loadOverviewFeeds() {
             // Recent reports feed
-            const repRes = await adminFetch('/admin/reports?status=pending&limit=3');
             const repContainer = document.getElementById('overview-recent-reports');
-            if (repRes.ok && repRes.data.reports && repRes.data.reports.length > 0) {
-                repContainer.innerHTML = repRes.data.reports.map(r => `
-                    <div style="border-bottom: 1px solid var(--border-subtle); padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <div>
-                            <span class="report-reason-tag" style="margin-bottom: 2px;">${escapeHtml(r.reason)}</span>
-                            <div style="font-weight: 600; font-size: 13px; color: var(--text-heading);">
-                                Farmer: ${escapeHtml(r.farmer_name)} ${r.farm_name ? `(${escapeHtml(r.farm_name)})` : ''}
+            if (repContainer) {
+                const repRes = await adminFetch('/admin/reports?status=pending&limit=3');
+                if (repRes.ok && repRes.data.reports && repRes.data.reports.length > 0) {
+                    repContainer.innerHTML = repRes.data.reports.map(r => `
+                        <div style="border-bottom: 1px solid var(--border-subtle); padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <div>
+                                <span class="report-reason-tag" style="margin-bottom: 2px;">${escapeHtml(r.reason)}</span>
+                                <div style="font-weight: 600; font-size: 13px; color: var(--text-heading);">
+                                    Farmer: ${escapeHtml(r.farmer_name)} ${r.farm_name ? `(${escapeHtml(r.farm_name)})` : ''}
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-muted);">Reported by ${escapeHtml(r.reporter_name)}</div>
                             </div>
-                            <div style="font-size: 11.5px; color: var(--text-muted);">Reported by ${escapeHtml(r.reporter_name)}</div>
+                            <button type="button" class="btn-table-action btn-suspend" onclick="openSuspendModal(${r.farmer_id}, '${escapeHtml(r.farmer_name)}', 'farmer', ${r.id})">
+                                <i class="fa-solid fa-clock"></i> Suspend
+                            </button>
                         </div>
-                        <button type="button" class="btn-table-action btn-suspend" onclick="openSuspendModal(${r.farmer_id}, '${escapeHtml(r.farmer_name)}', 'farmer', ${r.id})">
-                            <i class="fa-solid fa-clock"></i> Suspend
-                        </button>
-                    </div>
-                `).join('');
-            } else {
-                repContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #059669; font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Zero pending complaints! Platform running clean.</div>`;
+                    `).join('');
+                } else {
+                    repContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #059669; font-weight: 500;"><i class="fa-solid fa-circle-check"></i> Zero pending complaints! Platform running clean.</div>`;
+                }
             }
 
             // Recent logs feed
-            const logRes = await adminFetch('/admin/logs?limit=4');
             const logContainer = document.getElementById('overview-recent-logs');
-            if (logRes.ok && logRes.data.logs && logRes.data.logs.length > 0) {
-                logContainer.innerHTML = logRes.data.logs.map(l => `
-                    <div style="border-bottom: 1px solid var(--border-subtle); padding: 10px 0; font-size: 12.5px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                            <strong>${formatActionBadge(l.action_type)} ${escapeHtml(l.target_name)}</strong>
-                            <span style="font-size: 11px; color: var(--text-muted);">${formatDate(l.created_at)}</span>
+            if (logContainer) {
+                const logRes = await adminFetch('/admin/logs?limit=4');
+                if (logRes.ok && logRes.data.logs && logRes.data.logs.length > 0) {
+                    logContainer.innerHTML = logRes.data.logs.map(l => `
+                        <div style="border-bottom: 1px solid var(--border-subtle); padding: 10px 0; font-size: 12.5px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <strong>${formatActionBadge(l.action_type)} ${escapeHtml(l.target_name)}</strong>
+                                <span style="font-size: 11px; color: var(--text-muted);">${formatDate(l.created_at)}</span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 11.5px;">Reason: ${escapeHtml(l.reason)} ${l.days ? `(${l.days} days)` : ''}</div>
                         </div>
-                        <div style="color: var(--text-muted); font-size: 11.5px;">Reason: ${escapeHtml(l.reason)} ${l.days ? `(${l.days} days)` : ''}</div>
-                    </div>
-                `).join('');
-            } else {
-                logContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No recent actions logged.</div>`;
+                    `).join('');
+                } else {
+                    logContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No recent actions logged.</div>`;
+                }
             }
         }
 
@@ -927,11 +1018,11 @@
                     const initials = (u.name || 'F').charAt(0).toUpperCase();
                     const statusClass = u.status === 'active' ? 'active' : (u.status === 'suspended' ? 'suspended' : 'banned');
                     const statusText = u.status === 'suspended' ? `Suspended (${u.days_remaining}d left)` : (u.status === 'banned' ? 'Banned' : 'Active');
-                    const warningHtml = (u.warning_count > 0) 
+                    const warningHtml = (u.warning_count > 0)
                         ? `<span class="badge-warning-count" title="${escapeHtml(u.last_warning || '')}"><i class="fa-solid fa-triangle-exclamation"></i> ${u.warning_count} Warned</span>`
                         : `<span class="badge-warning-count clean">0 Clean</span>`;
 
-                    const actionsHtml = u.status === 'suspended' 
+                    const actionsHtml = u.status === 'suspended'
                         ? `<button type="button" class="btn-table-action btn-unsuspend" onclick="handleUnsuspend(${u.id}, '${escapeHtml(u.name)}')"><i class="fa-solid fa-unlock"></i> Lift Suspension</button>`
                         : (u.status === 'banned'
                             ? `<button type="button" class="btn-table-action btn-unban" onclick="handleUnban(${u.id}, '${escapeHtml(u.name)}')"><i class="fa-solid fa-user-check"></i> Revoke Ban</button>`
@@ -1000,9 +1091,12 @@
         }
 
         async function loadCustomers() {
-            const search = document.getElementById('customers-search-input').value.trim();
-            const status = document.getElementById('customers-status-filter').value;
+            const searchInput = document.getElementById('customers-search-input');
+            const search = searchInput ? searchInput.value.trim() : '';
+            const statusSelect = document.getElementById('customers-status-filter');
+            const status = statusSelect ? statusSelect.value : 'all';
             const tbody = document.getElementById('customers-table-body');
+            if (!tbody) return;
 
             const res = await adminFetch(`/admin/users?role=customer&status=${status}&search=${encodeURIComponent(search)}`);
             if (res.ok && res.data.users) {
@@ -1019,11 +1113,11 @@
                     const initials = (u.name || 'C').charAt(0).toUpperCase();
                     const statusClass = u.status === 'active' ? 'active' : (u.status === 'suspended' ? 'suspended' : 'banned');
                     const statusText = u.status === 'suspended' ? `Suspended (${u.days_remaining}d left)` : (u.status === 'banned' ? 'Banned' : 'Active');
-                    const warningHtml = (u.warning_count > 0) 
+                    const warningHtml = (u.warning_count > 0)
                         ? `<span class="badge-warning-count"><i class="fa-solid fa-triangle-exclamation"></i> ${u.warning_count} Warned</span>`
                         : `<span class="badge-warning-count clean">0 Clean</span>`;
 
-                    const actionsHtml = u.status === 'suspended' 
+                    const actionsHtml = u.status === 'suspended'
                         ? `<button type="button" class="btn-table-action btn-unsuspend" onclick="handleUnsuspend(${u.id}, '${escapeHtml(u.name)}')"><i class="fa-solid fa-unlock"></i> Lift Suspension</button>`
                         : (u.status === 'banned'
                             ? `<button type="button" class="btn-table-action btn-unban" onclick="handleUnban(${u.id}, '${escapeHtml(u.name)}')"><i class="fa-solid fa-user-check"></i> Revoke Ban</button>`
@@ -1238,7 +1332,7 @@
             document.getElementById('suspend-user-name').textContent = userName;
             document.getElementById('suspend-user-role').textContent = `${userRole.toUpperCase()} Account #${userId}`;
             document.getElementById('suspend-user-avatar').textContent = userName.charAt(0).toUpperCase();
-            
+
             // Default 7 days
             setSuspensionDays(7);
             document.getElementById('suspend-reason-input').value = reportId ? `Action taken on customer complaint #REP-${reportId}` : '';
@@ -1524,4 +1618,5 @@
     </script>
     <script src="js/i18n.js"></script>
 </body>
+
 </html>

@@ -15,6 +15,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const featuresRoutes = require('./routes/featuresRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -47,6 +48,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/features', featuresRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

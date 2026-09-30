@@ -44,11 +44,18 @@ const customer = {
         this.setupUploadAreas();
         this.patchCartBadge();
         this.setupRealtimeOrderSync();
-        this.fetchWishlistIds();
 
-        // Handle URL parameters (e.g. ?page=orders, ?search=..., ?category=...)
+        // Progressive background data loading (non-blocking)
+        Promise.allSettled([
+            this.fetchWishlistIds(),
+            this.updateUnreadMessagesBadge()
+        ]);
+
+        // Handle URL parameters or hash (e.g. #products, #messages, ?page=orders, etc.)
+        const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
         const urlParams = new URLSearchParams(window.location.search);
-        const reqPage = urlParams.get('page') || 'dashboard';
+        let reqPage = hash || urlParams.get('page') || 'products';
+        if (reqPage === 'dashboard') reqPage = 'products';
         const reqSearch = urlParams.get('search');
         const reqCat = urlParams.get('category');
 
@@ -64,7 +71,14 @@ const customer = {
         }
 
         const reqFarmer = urlParams.get('farmer');
-        if (reqFarmer) {
+        if (reqPage === 'report') {
+            this.showPage('browse');
+            setTimeout(() => {
+                if (typeof openCustomerReportFarmerModal === 'function') {
+                    openCustomerReportFarmerModal();
+                }
+            }, 250);
+        } else if (reqFarmer) {
             this.activeFarmerId = reqFarmer;
             this.showPage('browse');
         } else {
@@ -93,6 +107,9 @@ const customer = {
                 const page = link.dataset.page;
                 if (page) {
                     e.preventDefault();
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, '', `#${page}`);
+                    }
                     this.showPage(page);
                 }
             });
@@ -146,13 +163,16 @@ const customer = {
     },
 
     showPage(page) {
-        this.currentPage = page;
+        let targetPage = page;
+        if (targetPage === 'products' || targetPage === 'dashboard') targetPage = 'browse';
+        this.currentPage = targetPage;
+
         document.querySelectorAll('.page-content').forEach(el => {
             el.classList.remove('active');
             el.style.display = 'none';
         });
 
-        const target = document.getElementById(`page-${page}`);
+        const target = document.getElementById(`page-${targetPage}`);
         if (target) {
             target.style.display = 'block';
             setTimeout(() => target.classList.add('active'), 10);
@@ -160,15 +180,20 @@ const customer = {
 
         // Update active class in sidebar nav
         document.querySelectorAll('.sidebar-nav a').forEach(a => {
-            a.classList.toggle('active', a.dataset.page === page);
+            const p = a.dataset.page;
+            const isMatch = (p === page) || (p === 'products' && (targetPage === 'browse' || targetPage === 'products'));
+            a.classList.toggle('active', isMatch);
         });
 
-        switch(page) {
-            case 'dashboard':
-                this.loadDashboardProducts();
-                break;
+        switch(targetPage) {
             case 'browse':
+                if (typeof FFProductBrowser !== 'undefined') {
+                    FFProductBrowser.renderProduceSelector('customer-produce-selector-container', (produceName) => this.filterByProduce(produceName));
+                }
                 this.loadBrowseProducts();
+                break;
+            case 'messages':
+                this.loadMessages();
                 break;
             case 'categories':
                 // Categories page loaded
@@ -234,9 +259,46 @@ const customer = {
     },
 
     handleSearch() {
+        this.activeProduceName = '';
         this.currentPageNum = 1;
         this.showPage('browse');
     },
+
+    filterByProduce(produceName) {
+        this.activeProduceName = produceName || '';
+        this.currentPageNum = 1;
+        const searchInput = document.getElementById('search-input');
+        if (searchInput && produceName) {
+            searchInput.value = '';
+        }
+        this.loadBrowseProducts();
+    },
+
+    async loadMessages() {
+        if (typeof FFMessaging !== 'undefined') {
+            await FFMessaging.loadConversations('customer-conversations-container', true);
+            this.updateUnreadMessagesBadge();
+        }
+    },
+
+    async updateUnreadMessagesBadge() {
+        try {
+            const data = await API.messages.getUnreadCount();
+            if (data && data.success && typeof data.unread_count !== 'undefined') {
+                const totalUnread = data.unread_count;
+                const badge = document.getElementById('cust-msg-badge');
+                if (badge) {
+                    badge.textContent = totalUnread;
+                    badge.style.display = totalUnread > 0 ? 'inline-flex' : 'none';
+                }
+            }
+        } catch (e) {
+            // Background badge fetch error, non-blocking
+        }
+    },
+
+    // In-memory cache for dashboard featured picks
+    _cachedDashboardProducts: null,
 
     // ============================================
     // DASHBOARD FEATURED PICKS
@@ -245,16 +307,28 @@ const customer = {
         const grid = document.getElementById('dashboard-product-grid');
         if (!grid) return;
 
+        // If already cached in session, render immediately with 0ms delay
+        if (this._cachedDashboardProducts && this._cachedDashboardProducts.length > 0) {
+            grid.innerHTML = '';
+            this._cachedDashboardProducts.forEach(p => {
+                grid.appendChild(this.createProductCard(p));
+            });
+            return;
+        }
+
         grid.innerHTML = '';
         for (let i = 0; i < 4; i++) {
             grid.innerHTML += `<div style="height:260px; background:var(--beige); border-radius:var(--radius-lg);" class="skeleton"></div>`;
         }
 
         try {
-            const data = await API.products.getAll({ available: 'true' });
+            // Fetch only 4 products with server-side limit
+            const data = await API.products.getAll({ available: 'true', limit: 4 });
             let prods = (data && data.success && Array.isArray(data.products))
-                ? data.products.slice(0, 4)
+                ? data.products
                 : [];
+
+            this._cachedDashboardProducts = prods;
 
             grid.innerHTML = '';
             if (prods.length > 0) {
@@ -296,7 +370,11 @@ const customer = {
             const sort = sortSelect ? sortSelect.value : 'newest';
 
             const params = { available: 'true' };
-            if (search) params.search = search;
+            if (this.activeProduceName) {
+                params.search = this.activeProduceName;
+            } else if (search) {
+                params.search = search;
+            }
             if (category) params.category = category;
             if (this.activeFarmerId) {
                 params.farmer = this.activeFarmerId;
@@ -1533,7 +1611,8 @@ const customer = {
 
             if (data.assignment) {
                 const a = data.assignment;
-                if (driverEl) driverEl.innerHTML = `<i class="fas fa-motorcycle" style="color:#355C24;margin-right:6px;"></i><strong>${a.delivery_person_name || 'Driver Assigned'}</strong>`;
+                const phoneHtml = a.delivery_person_phone ? `<span style="color:#6F7168;margin-left:8px;font-size:12px;"><i class="fas fa-phone" style="font-size:11px;"></i> ${a.delivery_person_phone}</span>` : '';
+                if (driverEl) driverEl.innerHTML = `<i class="fas fa-motorcycle" style="color:#355C24;margin-right:6px;"></i><strong>${a.delivery_person_name || 'Driver Assigned'}</strong>${phoneHtml}`;
                 if (vehicleEl && (a.vehicle_type || a.vehicle_number)) {
                     vehicleEl.innerHTML = `<i class="fas fa-truck" style="margin-right:4px;"></i>${a.vehicle_type || ''} ${a.vehicle_number ? '(' + a.vehicle_number + ')' : ''}`;
                 }
@@ -1551,7 +1630,7 @@ const customer = {
                 }
             } else {
                 if (updatedEl && !updatedEl.textContent.includes('Live')) {
-                    updatedEl.textContent = 'Awaiting driver GPS signal...';
+                    updatedEl.innerHTML = '<i class="fas fa-satellite-dish" style="color:#D97706;margin-right:4px;"></i>Waiting for delivery partner\'s GPS signal.';
                 }
             }
         } catch(e) {}
@@ -1646,12 +1725,7 @@ const customer = {
 
         const total = cart.getTotal();
         if (total < 600) {
-            const msg = 'Cart must having 600 INR to buy';
-            if (typeof toast !== 'undefined') {
-                toast.error(msg);
-            } else {
-                alert(msg);
-            }
+            alert('Cart must have at least ₹600 to buy.');
             if (typeof cart !== 'undefined' && !cart.isOpen) {
                 cart.toggle();
             }
@@ -1832,12 +1906,7 @@ const customer = {
 
         // Enforce 600 INR minimum order threshold
         if (total < 600) {
-            const msg = 'Cart must having 600 INR to buy';
-            if (typeof toast !== 'undefined') {
-                toast.error(msg);
-            } else {
-                alert(msg);
-            }
+            alert('Cart must have at least ₹600 to buy.');
             return;
         }
 
@@ -2054,12 +2123,7 @@ function proceedToCheckout() {
         }
         const total = cart.getTotal();
         if (total < 600) {
-            const msg = 'Cart must having 600 INR to buy';
-            if (typeof toast !== 'undefined') {
-                toast.error(msg);
-            } else {
-                alert(msg);
-            }
+            alert('Cart must have at least ₹600 to buy.');
             return;
         }
     }

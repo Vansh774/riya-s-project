@@ -68,11 +68,22 @@ const farmer = {
         // Instant cache-first dashboard restore (0ms paint)
         this.restoreCachedDashboard();
 
+        // Setup live price guidance on produce form
+        if (window.FFPriceRules) {
+            FFPriceRules.setupPriceGuidance('product-name', 'product-price', 'product-price-hint');
+        }
+
+        this.updateUnreadMessagesBadge();
+
         // Show default page
         this.showPage('dashboard');
 
-        // Warm up and prefetch all tab data in background immediately
-        setTimeout(() => this.preloadAllData(), 40);
+        // Warm up and prefetch secondary tab data only when browser is idle
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => this.preloadAllData(), { timeout: 3000 });
+        } else {
+            setTimeout(() => this.preloadAllData(), 2000);
+        }
     },
 
     restoreCachedDashboard() {
@@ -149,6 +160,12 @@ const farmer = {
                 break;
             case 'reports':
                 this.loadReports();
+                break;
+            case 'messages':
+                this.loadMessages();
+                break;
+            case 'product-requests':
+                this.loadProductRequests();
                 break;
             case 'profile':
                 this.loadProfile();
@@ -495,7 +512,7 @@ const farmer = {
             return `
                 <div class="top-product-item">
                     <span class="product-rank">${idx + 1}</span>
-                    <img src="${imgUrl || fallback}" class="product-thumb" alt="${p.name}" onerror="this.onerror=null;this.src='${fallback}';">
+                    <img src="${imgUrl || fallback}" class="product-thumb" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='${fallback}';">
                     <div class="product-meta">
                         <div class="product-name-txt">${p.name}</div>
                         <div class="product-bar-wrap">
@@ -1009,10 +1026,51 @@ const farmer = {
             const unit = document.getElementById('product-unit').value;
             const imageFile = document.getElementById('product-image').files[0];
 
-            if (!name) { if (typeof toast!=='undefined') toast.error('Please enter a product name'); return; }
-            if (!category) { if (typeof toast!=='undefined') toast.error('Please select a category'); return; }
-            if (!price || parseFloat(price) <= 0) { if (typeof toast!=='undefined') toast.error('Please enter a valid price'); return; }
-            if (!quantity || parseInt(quantity) < 0) { if (typeof toast!=='undefined') toast.error('Please enter a valid quantity'); return; }
+            if (window.FFValidate) {
+                FFValidate.clearFieldErrors(document.getElementById('product-form-fields'));
+            }
+
+            let hasError = false;
+            if (!name) {
+                if (window.FFValidate) FFValidate.showFieldError('product-name', 'Produce name is required.');
+                hasError = true;
+            }
+            if (!category) {
+                if (window.FFValidate) FFValidate.showFieldError('product-category', 'Category is required.');
+                hasError = true;
+            }
+
+            // Numeric check rejecting letters or invalid formats
+            if (window.FFValidate) {
+                const priceErr = FFValidate.number(price, 'Price', { min: 0.01, required: true });
+                if (priceErr) {
+                    FFValidate.showFieldError('product-price', priceErr);
+                    hasError = true;
+                }
+                const qtyErr = FFValidate.number(quantity, 'Stock Quantity', { min: 0, integer: true, required: true });
+                if (qtyErr) {
+                    FFValidate.showFieldError('product-quantity', qtyErr);
+                    hasError = true;
+                }
+            } else {
+                if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) hasError = true;
+                if (!quantity || isNaN(parseInt(quantity)) || parseInt(quantity) < 0) hasError = true;
+            }
+
+            // Price Rules Limit Validation
+            if (window.FFPriceRules && name && price) {
+                const priceCheck = FFPriceRules.validate(name, price);
+                if (!priceCheck.valid) {
+                    if (window.FFValidate) FFValidate.showFieldError('product-price', priceCheck.error);
+                    if (typeof toast !== 'undefined') toast.error(priceCheck.error, 'Price Rule Exceeded');
+                    return;
+                }
+            }
+
+            if (hasError) {
+                if (typeof toast !== 'undefined') toast.error('Please fix the highlighted errors before saving.', 'Validation Error');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('name', name);
@@ -1048,9 +1106,89 @@ const farmer = {
         document.getElementById('product-id').value = '';
         const prev = document.getElementById('upload-preview');
         if (prev) prev.innerHTML = '';
+        const hint = document.getElementById('product-price-hint');
+        if (hint) { hint.style.display = 'none'; hint.innerHTML = ''; }
+        if (window.FFValidate) {
+            FFValidate.clearFieldErrors(fields);
+        }
         const title = document.getElementById('product-form-title');
         if (title) title.textContent = 'Add New Produce';
         this.editingProductId = null;
+    },
+
+    // ============================================
+    // FARMER MESSAGING & PRODUCT REQUESTS
+    // ============================================
+    async loadMessages() {
+        if (typeof FFMessaging !== 'undefined') {
+            await FFMessaging.loadConversations('farmer-conversations-container', false);
+        }
+    },
+
+    async loadProductRequests() {
+        if (typeof FFProductRequests !== 'undefined') {
+            await FFProductRequests.renderFarmerRequests('farmer-requests-container');
+        }
+    },
+
+    async handleProductRequestSubmit() {
+        const name = document.getElementById('req-product-name').value.trim();
+        const category = document.getElementById('req-category').value;
+        const unit = document.getElementById('req-unit').value;
+        const minPrice = document.getElementById('req-min-price').value.trim();
+        const maxPrice = document.getElementById('req-max-price').value.trim();
+        const reason = document.getElementById('req-reason').value.trim();
+        const btn = document.getElementById('btn-submit-crop-req');
+
+        if (!name || !category || !reason) {
+            if (typeof toast !== 'undefined') toast.error('Please fill in produce name, category, and reason.');
+            return;
+        }
+
+        if (minPrice && (isNaN(parseFloat(minPrice)) || parseFloat(minPrice) < 0)) {
+            if (typeof toast !== 'undefined') toast.error('Suggested min price must be a valid positive number.');
+            return;
+        }
+        if (maxPrice && (isNaN(parseFloat(maxPrice)) || parseFloat(maxPrice) < 0)) {
+            if (typeof toast !== 'undefined') toast.error('Suggested max price must be a valid positive number.');
+            return;
+        }
+        if (minPrice && maxPrice && parseFloat(minPrice) >= parseFloat(maxPrice)) {
+            if (typeof toast !== 'undefined') toast.error('Suggested minimum price must be less than maximum price.');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Submitting...';
+        }
+
+        try {
+            const res = await FFProductRequests.submit({
+                product_name: name,
+                category,
+                unit: unit || 'kg',
+                suggested_min_price: minPrice ? parseFloat(minPrice) : null,
+                suggested_max_price: maxPrice ? parseFloat(maxPrice) : null,
+                reason
+            });
+
+            if (res && res.success) {
+                if (typeof toast !== 'undefined') toast.success(res.message || 'Product request submitted to Admin!');
+                const form = document.getElementById('farmer-product-request-form');
+                if (form) form.reset();
+                await this.loadProductRequests();
+            } else {
+                if (typeof toast !== 'undefined') toast.error(res.message || 'Submission failed.');
+            }
+        } catch (e) {
+            if (typeof toast !== 'undefined') toast.error(e.message || 'Error submitting request.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Submit for Admin Review';
+            }
+        }
     },
 
     async deleteProduct(id) {
@@ -2147,11 +2285,13 @@ const farmer = {
                         <label style="font-size:11px;font-weight:700;color:#6F7168;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Delivery Person Name *</label>
                         <input id="dp-name" type="text" placeholder="e.g. Ramesh Kumar"
                                style="width:100%;padding:11px 14px;border:1.5px solid #E5DEC8;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13.5px;outline:none;">
+                        <div id="dp-name-error" style="display:none;color:#DC2626;font-size:12px;margin-top:4px;"></div>
                     </div>
                     <div>
-                        <label style="font-size:11px;font-weight:700;color:#6F7168;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Phone Number *</label>
-                        <input id="dp-phone" type="tel" placeholder="e.g. +91 98765 43210"
+                        <label style="font-size:11px;font-weight:700;color:#6F7168;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Phone Number (10 digits) *</label>
+                        <input id="dp-phone" type="tel" placeholder="e.g. 9876543210" maxlength="14"
                                style="width:100%;padding:11px 14px;border:1.5px solid #E5DEC8;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13.5px;outline:none;">
+                        <div id="dp-phone-error" style="display:none;color:#DC2626;font-size:12px;margin-top:4px;"></div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div>
@@ -2165,9 +2305,10 @@ const farmer = {
                             </select>
                         </div>
                         <div>
-                            <label style="font-size:11px;font-weight:700;color:#6F7168;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Vehicle Number</label>
-                            <input id="dp-vehicle-number" type="text" placeholder="e.g. MH 12 AB 1234"
+                            <label style="font-size:11px;font-weight:700;color:#6F7168;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Vehicle Number Plate *</label>
+                            <input id="dp-vehicle-number" type="text" placeholder="e.g. GJ03 MB001"
                                    style="width:100%;padding:11px 14px;border:1.5px solid #E5DEC8;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+                            <div id="dp-vehicle-error" style="display:none;color:#DC2626;font-size:12px;margin-top:4px;"></div>
                         </div>
                     </div>
                     <div>
@@ -2212,27 +2353,100 @@ const farmer = {
         `;
         document.body.appendChild(modal);
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-        document.getElementById('dp-name').focus();
+
+        const nameInput = document.getElementById('dp-name');
+        const phoneInput = document.getElementById('dp-phone');
+        const vehicleInput = document.getElementById('dp-vehicle-number');
+
+        nameInput.addEventListener('focus', () => {
+            const err = document.getElementById('dp-name-error');
+            if (err) err.style.display = 'none';
+            nameInput.style.borderColor = '#E5DEC8';
+        });
+        nameInput.addEventListener('input', () => {
+            const err = document.getElementById('dp-name-error');
+            if (err) err.style.display = 'none';
+            nameInput.style.borderColor = '#E5DEC8';
+        });
+
+        phoneInput.addEventListener('focus', () => {
+            const err = document.getElementById('dp-phone-error');
+            if (err) err.style.display = 'none';
+            phoneInput.style.borderColor = '#E5DEC8';
+        });
+        phoneInput.addEventListener('input', () => {
+            const err = document.getElementById('dp-phone-error');
+            if (err) err.style.display = 'none';
+            phoneInput.style.borderColor = '#E5DEC8';
+        });
+
+        if (vehicleInput) {
+            vehicleInput.addEventListener('focus', () => {
+                const err = document.getElementById('dp-vehicle-error');
+                if (err) err.style.display = 'none';
+                vehicleInput.style.borderColor = '#E5DEC8';
+            });
+            vehicleInput.addEventListener('input', () => {
+                const err = document.getElementById('dp-vehicle-error');
+                if (err) err.style.display = 'none';
+                vehicleInput.style.borderColor = '#E5DEC8';
+            });
+        }
+
+        nameInput.focus();
+    },
+
+    normalizeVehicleNumber(val) {
+        if (!val) return null;
+        const clean = val.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const match = clean.match(/^([A-Z]{2})([0-9]{2})([A-Z]{1,3})([0-9]{1,4})$/);
+        if (!match) return null;
+        return `${match[1]}${match[2]} ${match[3]}${match[4]}`;
     },
 
     async submitAssignDelivery(orderId) {
-        const name = document.getElementById('dp-name').value.trim();
-        const phone = document.getElementById('dp-phone').value.trim();
+        const nameInput = document.getElementById('dp-name');
+        const phoneInput = document.getElementById('dp-phone');
+        const vehicleInput = document.getElementById('dp-vehicle-number');
+        const name = (nameInput?.value || '').trim();
+        const phone = (phoneInput?.value || '').trim();
         const vehicleType = document.getElementById('dp-vehicle-type').value;
-        const vehicleNumber = document.getElementById('dp-vehicle-number').value.trim();
+        const vehicleNumberRaw = (vehicleInput?.value || '').trim();
         const notes = document.getElementById('dp-notes').value.trim();
+        const nameErr = document.getElementById('dp-name-error');
+        const phoneErr = document.getElementById('dp-phone-error');
+        const vehicleErr = document.getElementById('dp-vehicle-error');
         const errorEl = document.getElementById('dp-error');
-        const resultEl = document.getElementById('dp-result');
-        const actionsEl = document.getElementById('dp-actions');
 
+        let hasError = false;
         if (!name) {
-            if (errorEl) { errorEl.style.display = 'block'; errorEl.textContent = 'Please enter delivery person name.'; }
-            return;
+            if (nameErr) { nameErr.textContent = 'Please enter delivery person name.'; nameErr.style.display = 'block'; }
+            if (nameInput) nameInput.style.borderColor = '#DC2626';
+            hasError = true;
         }
+
+        const cleanPhone = phone.replace(/[\s\-\+]/g, '').replace(/^91(?=\d{10}$)/, '');
         if (!phone) {
-            if (errorEl) { errorEl.style.display = 'block'; errorEl.textContent = 'Please enter delivery person phone number.'; }
-            return;
+            if (phoneErr) { phoneErr.textContent = 'Please enter delivery person phone number.'; phoneErr.style.display = 'block'; }
+            if (phoneInput) phoneInput.style.borderColor = '#DC2626';
+            hasError = true;
+        } else if (!/^\d{10}$/.test(cleanPhone)) {
+            if (phoneErr) { phoneErr.textContent = 'Please enter a valid 10-digit phone number.'; phoneErr.style.display = 'block'; }
+            if (phoneInput) phoneInput.style.borderColor = '#DC2626';
+            hasError = true;
         }
+
+        const normalizedPlate = this.normalizeVehicleNumber(vehicleNumberRaw);
+        if (!vehicleNumberRaw || !normalizedPlate) {
+            if (vehicleErr) {
+                vehicleErr.textContent = 'Please enter a valid Gujarat vehicle registration number, e.g. GJ03 MB001.';
+                vehicleErr.style.display = 'block';
+            }
+            if (vehicleInput) vehicleInput.style.borderColor = '#DC2626';
+            hasError = true;
+        }
+
+        if (hasError) return;
         if (errorEl) errorEl.style.display = 'none';
 
         const submitBtn = document.querySelector('#dp-actions button:last-child');
@@ -2241,9 +2455,9 @@ const farmer = {
         try {
             const payload = {
                 delivery_person_name: name,
-                delivery_person_phone: phone,
+                delivery_person_phone: cleanPhone,
                 vehicle_type: vehicleType,
-                vehicle_number: vehicleNumber,
+                vehicle_number: normalizedPlate,
                 notes
             };
 
@@ -2520,6 +2734,7 @@ const farmer = {
             if (data && data.success && data.user) {
                 const u = data.user;
                 const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+                setVal('profile-farmer-id', u.farmer_id || 'FID-2024-8841');
                 setVal('profile-name', u.name);
                 setVal('profile-email', u.email);
                 setVal('profile-phone', u.phone);
@@ -2571,6 +2786,93 @@ const farmer = {
         } catch (error) {
             if (typeof toast!=='undefined') toast.error('Failed to update profile');
         }
+    },
+
+    async loadMessages() {
+        if (typeof FFMessaging !== 'undefined') {
+            await FFMessaging.loadConversations('farmer-conversations-container', false);
+            this.updateUnreadMessagesBadge();
+        }
+    },
+
+    async loadProductRequests() {
+        if (typeof FFProductRequests !== 'undefined') {
+            await FFProductRequests.renderFarmerRequests('farmer-requests-container');
+        }
+    },
+
+    async handleProductRequestSubmit(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const name = document.getElementById('req-product-name').value.trim();
+        const category = document.getElementById('req-category').value;
+        const unit = document.getElementById('req-unit').value || 'kg';
+        const minPrice = document.getElementById('req-min-price').value;
+        const maxPrice = document.getElementById('req-max-price').value;
+        const reason = document.getElementById('req-reason').value.trim();
+
+        if (window.FFValidate) {
+            FFValidate.clearFieldErrors(document.getElementById('farmer-product-request-form'));
+        }
+
+        let hasErr = false;
+        if (!name) {
+            if (window.FFValidate) FFValidate.showFieldError('req-product-name', 'Produce name is required.');
+            hasErr = true;
+        }
+        if (!category) {
+            if (window.FFValidate) FFValidate.showFieldError('req-category', 'Category is required.');
+            hasErr = true;
+        }
+        if (minPrice && window.FFValidate) {
+            const err = FFValidate.number(minPrice, 'Min Price', { min: 1 });
+            if (err) { FFValidate.showFieldError('req-min-price', err); hasErr = true; }
+        }
+        if (maxPrice && window.FFValidate) {
+            const err = FFValidate.number(maxPrice, 'Max Price', { min: 1 });
+            if (err) { FFValidate.showFieldError('req-max-price', err); hasErr = true; }
+        }
+        if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
+            if (window.FFValidate) FFValidate.showFieldError('req-max-price', 'Max price cannot be less than min price.');
+            hasErr = true;
+        }
+
+        if (hasErr) return;
+
+        try {
+            const res = await FFProductRequests.submit({
+                product_name: name,
+                category,
+                unit,
+                suggested_min_price: minPrice ? parseFloat(minPrice) : null,
+                suggested_max_price: maxPrice ? parseFloat(maxPrice) : null,
+                reason
+            });
+
+            if (res && res.success) {
+                if (typeof toast !== 'undefined') toast.success('Your crop proposal was submitted for administrative review!', 'Request Submitted');
+                const form = document.getElementById('farmer-product-request-form');
+                if (form) form.reset();
+                this.loadProductRequests();
+            } else {
+                if (typeof toast !== 'undefined') toast.error(res?.message || 'Could not submit request', 'Submission Failed');
+            }
+        } catch (err) {
+            if (typeof toast !== 'undefined') toast.error(err.message || 'Submission error');
+        }
+    },
+
+    async updateUnreadMessagesBadge() {
+        try {
+            const data = await API.messages.getUnreadCount();
+            if (data && data.success && typeof data.unread_count !== 'undefined') {
+                const totalUnread = data.unread_count;
+                const badge = document.getElementById('farmer-msg-badge');
+                if (badge) {
+                    badge.textContent = totalUnread;
+                    badge.style.display = totalUnread > 0 ? 'inline-block' : 'none';
+                }
+            }
+        } catch (e) {}
     }
 };
 

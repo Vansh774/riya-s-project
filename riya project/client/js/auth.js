@@ -68,7 +68,7 @@ function redirectToDashboard(user) {
     if (user.role === 'farmer') {
         window.location.href = 'farmer-dashboard.html';
     } else if (user.role === 'customer') {
-        window.location.href = 'customer-dashboard.html';
+        window.location.href = 'customer-dashboard.html#products';
     } else {
         window.location.href = 'index.html';
     }

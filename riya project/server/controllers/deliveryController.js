@@ -13,6 +13,15 @@ const emitOrderUpdate = (req, orderId, eventName, payload) => {
     }
 };
 
+// Helper to normalize and validate Indian vehicle registration plate (e.g. GJ03 MB001)
+const normalizeVehicleNumber = (val) => {
+    if (!val) return null;
+    const clean = val.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const match = clean.match(/^([A-Z]{2})([0-9]{2})([A-Z]{1,3})([0-9]{1,4})$/);
+    if (!match) return null;
+    return `${match[1]}${match[2]} ${match[3]}${match[4]}`;
+};
+
 // ─── 1. FARMER: Assign delivery person to an order ─────────────────────────────
 const assignDelivery = async (req, res) => {
     try {
@@ -29,8 +38,17 @@ const assignDelivery = async (req, res) => {
         if (!delivery_person_name || !delivery_person_name.trim()) {
             return res.status(400).json({ success: false, message: 'Delivery person name is required' });
         }
-        if (!delivery_person_phone || !delivery_person_phone.trim()) {
-            return res.status(400).json({ success: false, message: 'Delivery person phone number is required' });
+        const cleanedPhone = (delivery_person_phone || '').trim().replace(/[\s\-\+]/g, '').replace(/^91(?=\d{10}$)/, '');
+        if (!/^\d{10}$/.test(cleanedPhone)) {
+            return res.status(400).json({ success: false, message: 'Please enter a valid 10-digit phone number' });
+        }
+
+        const normalizedVehicleNumber = normalizeVehicleNumber(vehicle_number);
+        if (!normalizedVehicleNumber) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please enter a valid Gujarat vehicle registration number, e.g. GJ03 MB001'
+            });
         }
 
         // Verify farmer owns this order
@@ -75,9 +93,9 @@ const assignDelivery = async (req, res) => {
                 orderId,
                 farmerId,
                 delivery_person_name.trim(),
-                delivery_person_phone.trim(),
+                cleanedPhone,
                 vehicle_type ? vehicle_type.trim() : null,
-                vehicle_number ? vehicle_number.trim() : null,
+                normalizedVehicleNumber,
                 token,
                 notes ? notes.trim() : null
             ]
@@ -101,7 +119,7 @@ const assignDelivery = async (req, res) => {
             delivery_status: 'assigned',
             delivery_person_name: delivery_person_name.trim(),
             vehicle_type: vehicle_type || null,
-            vehicle_number: vehicle_number || null,
+            vehicle_number: normalizedVehicleNumber,
             note: `Delivery assigned to ${delivery_person_name.trim()}`
         });
 
@@ -113,9 +131,9 @@ const assignDelivery = async (req, res) => {
             assignment: {
                 order_id: orderId,
                 delivery_person_name: delivery_person_name.trim(),
-                delivery_person_phone: delivery_person_phone.trim(),
+                delivery_person_phone: cleanedPhone,
                 vehicle_type: vehicle_type || null,
-                vehicle_number: vehicle_number || null,
+                vehicle_number: normalizedVehicleNumber,
                 status: 'assigned'
             }
         });

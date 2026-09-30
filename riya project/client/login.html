@@ -252,13 +252,13 @@
                         <form id="form-register" onsubmit="event.preventDefault(); handleRegisterSubmit();" novalidate>
                             <!-- Names Row -->
                             <div class="input-group-row">
-                                <div class="form-group" style="margin-bottom: 0;">
+                                <div class="form-group">
                                     <div class="input-wrapper">
                                         <input type="text" id="register-first-name" class="form-input" placeholder="First Name" required autocomplete="given-name">
                                         <i class="fa-regular fa-user input-icon-left"></i>
                                     </div>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0;">
+                                <div class="form-group">
                                     <div class="input-wrapper">
                                         <input type="text" id="register-last-name" class="form-input" placeholder="Last Name" required autocomplete="family-name">
                                     </div>
@@ -348,14 +348,14 @@
                                     <p class="farmer-section-subtitle">
                                         Enter your official Farmer ID and Kisan Card number as registered in agricultural records.
                                     </p>
-                                    <div class="input-group-row" style="margin-bottom: 0;">
-                                        <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="input-group-row">
+                                        <div class="form-group">
                                             <div class="input-wrapper">
                                                 <input type="text" id="register-farmer-id" class="form-input" placeholder="Farmer ID (e.g. FID-2024-8841)" oninput="onFarmerCredentialsChanged()">
                                                 <i class="fa-solid fa-id-badge input-icon-left"></i>
                                             </div>
                                         </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
+                                        <div class="form-group">
                                             <div class="input-wrapper">
                                                 <input type="text" id="register-kisan-card" class="form-input" placeholder="Kisan Card No. (e.g. KCC-8841-3920)" oninput="onFarmerCredentialsChanged()">
                                                 <i class="fa-solid fa-credit-card input-icon-left"></i>
@@ -591,6 +591,7 @@
     <!-- ==========================================
          JAVASCRIPT AUTH & UI LOGIC
          ========================================== -->
+    <script src="js/features.js"></script>
     <script>
         // FreshField Toast Notification System
         const toast = {
@@ -716,8 +717,29 @@
             const password = document.getElementById('login-password').value;
             const btn = document.getElementById('btn-login-submit');
 
-            if (!emailOrPhone || !password) {
-                toast.error('Please fill in both email/phone and password.', 'Missing Details');
+            if (window.FFValidate) {
+                FFValidate.clearFieldErrors(document.getElementById('form-login'));
+            }
+
+            let hasError = false;
+            if (!emailOrPhone) {
+                if (window.FFValidate) FFValidate.showFieldError('login-email', 'Email or Phone Number is required.');
+                hasError = true;
+            } else if (emailOrPhone.includes('@') && window.FFValidate) {
+                const emailErr = FFValidate.email(emailOrPhone);
+                if (emailErr) {
+                    FFValidate.showFieldError('login-email', emailErr);
+                    hasError = true;
+                }
+            }
+
+            if (!password) {
+                if (window.FFValidate) FFValidate.showFieldError('login-password', 'Password is required.');
+                hasError = true;
+            }
+
+            if (hasError) {
+                toast.error('Please enter valid login credentials.', 'Missing Details');
                 return;
             }
 
@@ -753,7 +775,7 @@
                     } else if (data.user.role === 'farmer') {
                         window.location.replace('farmer-dashboard.html');
                     } else {
-                        window.location.replace('customer-dashboard.html');
+                        window.location.replace('customer-dashboard.html#products');
                     }
                 } else {
                     toast.error(data.message || 'Invalid email or password. Please try again.', 'Authentication Failed');
@@ -1286,9 +1308,44 @@
 
             const fullName = `${firstName} ${lastName}`.trim();
 
-            if (!fullName || !email || !password) {
-                toast.error('Please fill in your name, email, and password.', 'Required Fields');
-                return;
+            if (window.FFValidate) {
+                FFValidate.clearFieldErrors(document.getElementById('form-register'));
+            }
+
+            let hasError = false;
+            if (!firstName) {
+                if (window.FFValidate) FFValidate.showFieldError('register-first-name', 'First name is required.');
+                hasError = true;
+            }
+            if (!lastName) {
+                if (window.FFValidate) FFValidate.showFieldError('register-last-name', 'Last name is required.');
+                hasError = true;
+            }
+
+            if (window.FFValidate) {
+                const emailErr = FFValidate.email(email);
+                if (emailErr) {
+                    FFValidate.showFieldError('register-email', emailErr);
+                    hasError = true;
+                }
+                const passErr = FFValidate.password(password);
+                if (passErr) {
+                    FFValidate.showFieldError('register-password', passErr);
+                    hasError = true;
+                }
+                if (phone) {
+                    const phoneErr = FFValidate.phone(phone);
+                    if (phoneErr) {
+                        FFValidate.showFieldError('register-phone', phoneErr);
+                        hasError = true;
+                    }
+                }
+            } else {
+                if (!email) hasError = true;
+                if (!password || password.length < 8) {
+                    toast.error('Password must be at least 8 characters long.', 'Password Too Short');
+                    return;
+                }
             }
 
             if (!termsAgree) {
@@ -1296,8 +1353,8 @@
                 return;
             }
 
-            if (password.length < 8) {
-                toast.error('Password must be at least 8 characters long.', 'Password Too Short');
+            if (hasError) {
+                toast.error('Please resolve the errors highlighted in red.', 'Validation Error');
                 return;
             }
 
@@ -1394,7 +1451,7 @@
                         if (data.user.role === 'farmer') {
                             window.location.replace('farmer-dashboard.html');
                         } else {
-                            window.location.replace('customer-dashboard.html');
+                            window.location.replace('customer-dashboard.html#products');
                         }
                     }, 800);
                 } else {

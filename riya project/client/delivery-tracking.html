@@ -487,24 +487,59 @@ function toggleGPS() {
     }
 }
 
+let isHighAccuracyFallback = false;
+
 async function startGPS() {
     if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser.');
+        alert("Geolocation is not supported by this browser.");
+        updateGPSUI('unsupported', 'Geolocation not supported by browser');
         return;
     }
 
+    if (navigator.permissions && navigator.permissions.query) {
+        try {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            console.log('[GPS Debug] Permission status state:', status.state);
+            if (status.state === 'denied') {
+                alert("Location permission is denied. Please allow location access for FreshField in your browser settings and try again.");
+                updateGPSUI('denied', 'Location permission denied in browser');
+                return;
+            }
+        } catch(e) {
+            console.log('[GPS Debug] Permission query error/unsupported:', e.message);
+        }
+    }
+
+    updateGPSUI('requesting', 'Getting Your Location...');
+
     try {
-        // Notify backend that tracking is starting
         await fetch(`${API}/delivery/track/${TOKEN}/start`, { method: 'POST' });
-    } catch(e) {}
+    } catch(e) {
+        console.warn('[GPS Debug] Start backend ping failed:', e.message);
+    }
 
-    gpsActive = true;
-    updateGPSUI(true);
+    isHighAccuracyFallback = false;
+    requestWatchPosition(true);
+}
 
+function requestWatchPosition(highAccuracy) {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+
+    const options = {
+        enableHighAccuracy: highAccuracy,
+        timeout: highAccuracy ? 8000 : 15000,
+        maximumAge: highAccuracy ? 0 : 5000
+    };
+
+    console.log(`[GPS Debug] Starting watchPosition (highAccuracy: ${highAccuracy})`);
+    
     watchId = navigator.geolocation.watchPosition(
         onPositionUpdate,
-        onPositionError,
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+        (err) => onPositionError(err, highAccuracy),
+        options
     );
 }
 
@@ -514,49 +549,106 @@ async function stopGPS() {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
     }
-    updateGPSUI(false);
+    updateGPSUI('stopped', 'GPS Stopped');
 
     try {
         await fetch(`${API}/delivery/track/${TOKEN}/stop`, { method: 'POST' });
     } catch(e) {}
 }
 
-function updateGPSUI(active) {
+function updateGPSUI(state, message) {
     const badge = document.getElementById('gps-badge');
     const dot = document.getElementById('status-dot');
     const btn = document.getElementById('gps-action-btn');
     const sub = document.getElementById('gps-subtext');
 
-    if (badge) {
-        badge.className = 'gps-badge ' + (active ? 'active' : '');
-        badge.innerHTML = `<i class="fas fa-satellite-dish"></i> <span>${active ? 'GPS Live' : 'GPS Off'}</span>`;
-    }
-    if (dot && assignmentData?.status !== 'delivered') {
-        dot.className = 'status-dot ' + (active ? 'active' : '');
-    }
-    if (btn) {
-        btn.className = 'gps-btn ' + (active ? 'stop' : 'start');
-        btn.innerHTML = `<i class="fas ${active ? 'fa-pause' : 'fa-play'}"></i> <span>${active ? 'Stop' : 'Start GPS'}</span>`;
-    }
-    if (sub) {
-        sub.textContent = active ? '🟢 Live GPS sharing is active' : 'GPS sharing paused';
+    if (state === true || state === 'live') {
+        gpsActive = true;
+        if (badge) {
+            badge.className = 'gps-badge active';
+            badge.innerHTML = `<i class="fas fa-satellite-dish"></i> <span>GPS Live</span>`;
+        }
+        if (dot && assignmentData?.status !== 'delivered') {
+            dot.className = 'status-dot active';
+        }
+        if (btn) {
+            btn.className = 'gps-btn stop';
+            btn.innerHTML = `<i class="fas fa-pause"></i> <span>Stop GPS</span>`;
+        }
+        if (sub) {
+            sub.textContent = message || '🟢 Live GPS sharing is active';
+        }
+    } else if (state === 'requesting') {
+        if (badge) {
+            badge.className = 'gps-badge';
+            badge.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Locating...</span>`;
+        }
+        if (btn) {
+            btn.className = 'gps-btn start';
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Starting...</span>`;
+        }
+        if (sub) {
+            sub.textContent = message || 'Getting Your Location...';
+        }
+    } else {
+        gpsActive = false;
+        if (badge) {
+            badge.className = 'gps-badge';
+            badge.innerHTML = `<i class="fas fa-satellite-dish"></i> <span>GPS Off</span>`;
+        }
+        if (dot && assignmentData?.status !== 'delivered') {
+            dot.className = 'status-dot';
+        }
+        if (btn) {
+            btn.className = 'gps-btn start';
+            btn.innerHTML = `<i class="fas fa-play"></i> <span>Start GPS</span>`;
+        }
+        if (sub) {
+            sub.textContent = message || (state === 'stopped' ? 'GPS Stopped' : 'GPS sharing paused');
+        }
     }
 }
 
-// GPS Position Handler with Throttling
+// GPS Position Handler
 async function onPositionUpdate(position) {
-    const { latitude, longitude, accuracy, heading, speed } = position.coords;
-    const now = Date.now();
+    if (!position || !position.coords) {
+        console.warn('[GPS Debug] Position or position.coords missing');
+        return;
+    }
 
-    // Throttle updates: minimum 5m movement or at least 4s interval
+    const { latitude, longitude, accuracy, heading, speed } = position.coords;
+
+    // Strict coordinate validation
+    if (typeof latitude !== 'number' || typeof longitude !== 'number' || isNaN(latitude) || isNaN(longitude)) {
+        console.warn('[GPS Debug] Invalid lat/lng numbers:', latitude, longitude);
+        return;
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        console.warn('[GPS Debug] Lat/lng out of valid bounds:', latitude, longitude);
+        return;
+    }
+
+    if (latitude === 0 && longitude === 0) {
+        console.warn('[GPS Debug] Received (0,0) coordinates, ignoring');
+        return;
+    }
+
+    console.log('[GPS Debug] Position received successfully:', { latitude, longitude, accuracy, heading, speed });
+
+    const now = Date.now();
     if (lastLat !== null && lastLng !== null) {
         const dist = getDistanceMeters(lastLat, lastLng, latitude, longitude);
-        if (dist < 4 && (now - lastUpdateTime) < 4000) return;
+        if (dist < 4 && (now - lastUpdateTime) < 3000) return;
     }
 
     lastLat = latitude;
     lastLng = longitude;
     lastUpdateTime = now;
+
+    // Update UI state to Live
+    const accStr = accuracy ? `Accuracy: ~${Math.round(accuracy)}m` : 'Location detected';
+    updateGPSUI('live', `Location detected · ${accStr}`);
 
     placeDeliveryMarker(latitude, longitude, accuracy);
 
@@ -566,9 +658,9 @@ async function onPositionUpdate(position) {
     drawTrail();
 
     const timeStr = new Date().toLocaleTimeString();
-    const accStr = accuracy ? `±${Math.round(accuracy)}m` : '';
+    const accTxt = accuracy ? `±${Math.round(accuracy)}m` : '';
     const el = document.getElementById('last-update');
-    if (el) el.textContent = `Last update: ${timeStr} ${accStr}`;
+    if (el) el.textContent = `Last update: ${timeStr} ${accTxt}`;
 
     const payload = { latitude, longitude, accuracy, heading, speed };
 
@@ -577,20 +669,49 @@ async function onPositionUpdate(position) {
         socket.emit('send_location', { token: TOKEN, ...payload });
     }
 
-    // 2. Also send via HTTP POST for guaranteed database persistence
+    // 2. HTTP POST for database persistence
     try {
-        await fetch(`${API}/delivery/track/${TOKEN}/location`, {
+        const resp = await fetch(`${API}/delivery/track/${TOKEN}/location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-    } catch(e) {}
+        const resData = await resp.json();
+        if (!resData.success) {
+            console.warn('[GPS Debug] Backend location update warning:', resData.message);
+        } else {
+            console.log('[GPS Debug] Backend location updated successfully');
+        }
+    } catch(e) {
+        console.error('[GPS Debug] Location POST network error:', e.message);
+        const sub = document.getElementById('gps-subtext');
+        if (sub) sub.textContent = 'GPS detected, but location could not be sent to the server. Please check your connection.';
+    }
 }
 
-function onPositionError(err) {
-    console.warn('GPS error:', err.message);
-    const sub = document.getElementById('gps-subtext');
-    if (sub) sub.textContent = `GPS error: ${err.message}`;
+function onPositionError(err, triedHighAccuracy) {
+    console.warn('[GPS Debug] Geolocation error:', err.code, err.message);
+
+    // Fallback: retry with standard accuracy if high accuracy timed out or failed on desktop/laptop
+    if (triedHighAccuracy && (err.code === 3 || err.code === 2) && !isHighAccuracyFallback) {
+        console.log('[GPS Debug] High accuracy failed/timed out. Retrying with standard accuracy...');
+        isHighAccuracyFallback = true;
+        requestWatchPosition(false);
+        return;
+    }
+
+    gpsActive = false;
+    updateGPSUI('error', 'GPS Unavailable');
+
+    if (err.code === 1 || err.code === err.PERMISSION_DENIED) {
+        alert("Location permission is denied. Please allow location access for FreshField in your browser settings and try again.");
+    } else if (err.code === 2 || err.code === err.POSITION_UNAVAILABLE) {
+        alert("Your current location could not be determined. Please enable GPS/location services and try again.");
+    } else if (err.code === 3 || err.code === err.TIMEOUT) {
+        alert("Location request timed out. Please try again.");
+    } else {
+        alert(`GPS error: ${err.message || 'Unable to retrieve location'}`);
+    }
 }
 
 function placeDeliveryMarker(lat, lng, accuracy) {

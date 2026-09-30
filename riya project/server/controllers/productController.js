@@ -1,12 +1,142 @@
 const { pool } = require('../config/database');
 
+// Levenshtein distance helper
+function levenshteinDistance(s1, s2) {
+    s1 = (s1 || '').toLowerCase();
+    s2 = (s2 || '').toLowerCase();
+    const costs = [];
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i === 0) {
+                costs[j] = j;
+            } else if (j > 0) {
+                let newValue = costs[j - 1];
+                if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                }
+                costs[j - 1] = lastValue;
+                lastValue = newValue;
+            }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+    }
+    return costs[s2.length] !== undefined ? costs[s2.length] : 999;
+}
+
+const PRODUCE_TYPO_MAP = {
+    'aple': 'Apple',
+    'appel': 'Apple',
+    'tomatto': 'Tomato',
+    'tamatar': 'Tomato',
+    'potatto': 'Potato',
+    'aloo': 'Potato',
+    'alu': 'Potato',
+    'pyaz': 'Onion',
+    'mashroom': 'Mushroom',
+    'mushrum': 'Mushroom',
+    'banaana': 'Banana',
+    'kela': 'Banana',
+    'palak': 'Spinach',
+    'gobi': 'Cauliflower',
+    'patta gobi': 'Cabbage',
+    'okra': 'Bhindi (Okra)',
+    'ladyfinger': 'Bhindi (Okra)',
+    'eggplant': 'Brinjal (Eggplant)',
+    'baingan': 'Brinjal (Eggplant)',
+    'gajar': 'Carrot',
+    'lahsun': 'Garlic',
+    'adrak': 'Ginger',
+    'nimbu': 'Lemon',
+    'aam': 'Mango',
+    'anar': 'Pomegranate',
+    'dragonfruit': 'Dragon Fruit'
+};
+
+// Helper: normalize produce name to canonical catalog form
+async function normalizeProduceName(rawName) {
+    if (!rawName) return '';
+    const cleaned = rawName.trim().replace(/\s+\d{3,5}$/, '').trim();
+    const lower = cleaned.toLowerCase();
+
+    if (PRODUCE_TYPO_MAP[lower]) {
+        return PRODUCE_TYPO_MAP[lower];
+    }
+
+    try {
+        const [catalog] = await pool.query('SELECT name FROM approved_product_catalog WHERE is_active = TRUE');
+        // Exact case-insensitive match
+        for (const item of catalog) {
+            if (item.name.toLowerCase() === lower) {
+                return item.name;
+            }
+        }
+
+        // Substring match
+        for (const item of catalog) {
+            const cLower = item.name.toLowerCase();
+            if (cLower.includes(lower) || lower.includes(cLower)) {
+                return item.name;
+            }
+        }
+
+        // Fuzzy match
+        let bestMatch = null;
+        let minDistance = 999;
+        for (const item of catalog) {
+            const dist = levenshteinDistance(lower, item.name.toLowerCase());
+            const maxAllowed = item.name.length <= 5 ? 1 : 2;
+            if (dist <= maxAllowed && dist < minDistance) {
+                minDistance = dist;
+                bestMatch = item.name;
+            }
+        }
+
+        if (bestMatch) return bestMatch;
+    } catch (e) {
+        console.error('Error fetching catalog for normalization:', e);
+    }
+
+    return cleaned;
+}
+
+// Helper: lookup price rule by product name
+async function lookupPriceRule(productName) {
+    if (!productName) return null;
+    const normalizedName = await normalizeProduceName(productName);
+    const lower = normalizedName.toLowerCase();
+
+    // 1. Direct match on product_name or display_name
+    const [rules] = await pool.query(
+        'SELECT * FROM product_price_rules WHERE (product_name = ? OR LOWER(display_name) = ?) AND is_active = TRUE',
+        [lower, lower]
+    );
+    if (rules.length > 0) return rules[0];
+
+    // 2. Partial match against all active rules
+    const [allRules] = await pool.query('SELECT * FROM product_price_rules WHERE is_active = TRUE');
+    for (const r of allRules) {
+        const rName = r.product_name.toLowerCase();
+        const rDisp = (r.display_name || '').toLowerCase();
+        if (lower.includes(rName) || rName.includes(lower) || lower.includes(rDisp) || rDisp.includes(lower)) {
+            return r;
+        }
+        if (levenshteinDistance(lower, rName) <= 1 || levenshteinDistance(lower, rDisp) <= 1) {
+            return r;
+        }
+    }
+
+    return null;
+}
+
 // Get all products with filters
 const getProducts = async (req, res) => {
     try {
-        const { category, search, farmer, minPrice, maxPrice, available } = req.query;
+        const { category, search, farmer, minPrice, maxPrice, available, limit, offset } = req.query;
         
         let query = `
-            SELECT p.*, u.name as farmer_name, u.farm_name 
+            SELECT p.id, p.farmer_id, p.name, p.category, p.description, p.price, p.unit, p.quantity, p.image_url, p.is_available, p.created_at,
+                   u.name as farmer_name, u.farm_name, u.farm_location 
             FROM products p
             JOIN users u ON p.farmer_id = u.id
             WHERE 1=1
@@ -43,6 +173,22 @@ const getProducts = async (req, res) => {
         }
 
         query += ' ORDER BY p.created_at DESC';
+
+        if (limit) {
+            const numLimit = parseInt(limit);
+            if (!isNaN(numLimit) && numLimit > 0) {
+                query += ' LIMIT ?';
+                params.push(numLimit);
+
+                if (offset) {
+                    const numOffset = parseInt(offset);
+                    if (!isNaN(numOffset) && numOffset >= 0) {
+                        query += ' OFFSET ?';
+                        params.push(numOffset);
+                    }
+                }
+            }
+        }
 
         const [products] = await pool.query(query, params);
 
@@ -122,10 +268,85 @@ const createProduct = async (req, res) => {
             });
         }
 
+        const numPrice = parseFloat(price);
+        const numQty = parseInt(quantity);
+
+        if (isNaN(numPrice) || numPrice <= 0) {
+            return res.status(400).json({ success: false, message: 'Price must be a valid positive number (e.g. 25.50).' });
+        }
+        if (isNaN(numQty) || numQty < 0) {
+            return res.status(400).json({ success: false, message: 'Quantity must be a valid non-negative whole number.' });
+        }
+
+        const rawName = (name || '').trim();
+        const canonicalName = await normalizeProduceName(rawName);
+
+        // 1. Check if farmer has a pending request for this product
+        const [pendingReqs] = await pool.query(
+            `SELECT id, status FROM product_requests 
+             WHERE farmer_id = ? AND (LOWER(product_name) = LOWER(?) OR LOWER(product_name) = LOWER(?)) AND status = 'pending'
+             LIMIT 1`,
+            [farmerId, rawName, canonicalName]
+        );
+        if (pendingReqs.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "This product is currently awaiting admin approval. You cannot sell it until the product request is approved."
+            });
+        }
+
+        // 2. Check approved_product_catalog
+        const [catalogMatch] = await pool.query(
+            `SELECT id, name, category, unit FROM approved_product_catalog 
+             WHERE (LOWER(name) = LOWER(?) OR LOWER(name) = LOWER(?)) AND is_active = TRUE
+             LIMIT 1`,
+            [rawName, canonicalName]
+        );
+
+        if (catalogMatch.length === 0) {
+            // Check if there was a rejected request
+            const [rejectedReqs] = await pool.query(
+                `SELECT id, status FROM product_requests 
+                 WHERE farmer_id = ? AND (LOWER(product_name) = LOWER(?) OR LOWER(product_name) = LOWER(?)) AND status = 'rejected'
+                 LIMIT 1`,
+                [farmerId, rawName, canonicalName]
+            );
+            if (rejectedReqs.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This product request was rejected by admin. You cannot sell it without approval."
+                });
+            }
+
+            return res.status(400).json({
+                success: false,
+                message: "Product name not recognized. Please select an approved produce or submit a Product Request."
+            });
+        }
+
+        const resolvedName = catalogMatch[0].name;
+
+        // 3. Check price rules using canonical produce name
+        const priceRule = await lookupPriceRule(resolvedName);
+        if (priceRule) {
+            if (numPrice < priceRule.min_price) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Price ₹${numPrice} is below the allowed minimum of ₹${priceRule.min_price}/${priceRule.unit} for ${priceRule.display_name}.`
+                });
+            }
+            if (numPrice > priceRule.max_price) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Price ₹${numPrice} exceeds the allowed maximum of ₹${priceRule.max_price}/${priceRule.unit} for ${priceRule.display_name}.`
+                });
+            }
+        }
+
         const [result] = await pool.query(
             `INSERT INTO products (farmer_id, name, category, description, price, quantity, unit, image_url)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [farmerId, name, category, description || '', parseFloat(price), parseInt(quantity), unit || 'kg', imageUrl]
+            [farmerId, resolvedName, category, description || '', numPrice, numQty, unit || 'kg', imageUrl]
         );
 
         console.log('Product inserted with ID:', result.insertId);
@@ -191,6 +412,37 @@ const updateProduct = async (req, res) => {
             imageUrl = `/uploads/${req.file.filename}`;
         }
 
+        // Validate price and quantity if provided
+        if (price !== undefined && price !== '') {
+            const numPrice = parseFloat(price);
+            if (isNaN(numPrice) || numPrice <= 0) {
+                return res.status(400).json({ success: false, message: 'Price must be a valid positive number (e.g. 25.50).' });
+            }
+            // Check price rule against current or new product name
+            const checkName = name || products[0].name;
+            const priceRule = await lookupPriceRule(checkName);
+            if (priceRule) {
+                if (numPrice < priceRule.min_price) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Price ₹${numPrice} is below the allowed minimum of ₹${priceRule.min_price}/${priceRule.unit} for ${priceRule.display_name}.`
+                    });
+                }
+                if (numPrice > priceRule.max_price) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Price ₹${numPrice} exceeds the allowed maximum of ₹${priceRule.max_price}/${priceRule.unit} for ${priceRule.display_name}.`
+                    });
+                }
+            }
+        }
+        if (quantity !== undefined && quantity !== '') {
+            const numQty = parseInt(quantity);
+            if (isNaN(numQty) || numQty < 0) {
+                return res.status(400).json({ success: false, message: 'Quantity must be a valid non-negative whole number.' });
+            }
+        }
+
         // Build update query
         const updates = [];
         const params = [];
@@ -207,11 +459,11 @@ const updateProduct = async (req, res) => {
             updates.push('description = ?');
             params.push(description);
         }
-        if (price) {
+        if (price !== undefined && price !== '') {
             updates.push('price = ?');
             params.push(parseFloat(price));
         }
-        if (quantity !== undefined) {
+        if (quantity !== undefined && quantity !== '') {
             updates.push('quantity = ?');
             params.push(parseInt(quantity));
         }

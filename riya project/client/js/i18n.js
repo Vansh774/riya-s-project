@@ -511,8 +511,9 @@ const i18n = {
             document.head.appendChild(link);
         }
 
-        // Inject floating switcher
-        this.injectFloatingPill();
+        // Single language selector in header only - do not inject bottom floating selector
+        const floatingEl = document.getElementById('freshfield-floating-lang');
+        if (floatingEl) floatingEl.remove();
 
         // Inject into navigation headers automatically if a placeholder or nav container exists
         const navContainers = document.querySelectorAll('.nav-actions, .header-right-actions, .topbar-actions-right, .header-right, .topbar-right, .top-bar-right, .admin-topbar-right, .auth-top-navbar');

@@ -1,72 +1,95 @@
 const { body, validationResult } = require('express-validator');
+const { pool } = require('../config/database');
 
 // Validation rules
 const validateRegistration = [
     body('name')
         .trim()
-        .notEmpty().withMessage('Name is required')
-        .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters'),
+        .notEmpty().withMessage('Full name is required.')
+        .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters.'),
     
     body('email')
         .trim()
-        .notEmpty().withMessage('Email is required')
-        .isEmail().withMessage('Please provide a valid email address')
+        .notEmpty().withMessage('Email address is required.')
+        .isEmail().withMessage('Please enter a valid email address (e.g. name@example.com).')
         .normalizeEmail(),
     
     body('password')
-        .notEmpty().withMessage('Password is required')
-        .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+        .notEmpty().withMessage('Password is required.')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long.')
+        .matches(/\S/).withMessage('Password cannot be only spaces.'),
     
     body('role')
-        .notEmpty().withMessage('Role is required')
-        .isIn(['farmer', 'customer']).withMessage('Role must be either farmer or customer'),
+        .notEmpty().withMessage('Role is required.')
+        .isIn(['farmer', 'customer']).withMessage('Role must be either farmer or customer.'),
+
+    body('phone')
+        .optional({ checkFalsy: true })
+        .custom(val => {
+            const cleaned = String(val).replace(/[\s\-+()]/g, '');
+            if (!/^\d{7,15}$/.test(cleaned)) throw new Error('Please enter a valid phone number (digits only).');
+            return true;
+        }),
 
     body('farmer_id')
         .if(body('role').equals('farmer'))
         .trim()
-        .notEmpty().withMessage('Farmer ID is required for farmers')
-        .isLength({ min: 3 }).withMessage('Farmer ID must be at least 3 characters long'),
+        .notEmpty().withMessage('Farmer ID is required for farmer registration.')
+        .isLength({ min: 3 }).withMessage('Farmer ID must be at least 3 characters.'),
 
     body('kisan_card_number')
         .if(body('role').equals('farmer'))
         .trim()
-        .notEmpty().withMessage('Kisan Card number is required for farmers')
-        .isLength({ min: 3 }).withMessage('Kisan Card number must be at least 3 characters long')
+        .notEmpty().withMessage('Kisan Card number is required for farmer registration.')
+        .isLength({ min: 3 }).withMessage('Kisan Card number must be at least 3 characters.')
 ];
 
 const validateLogin = [
     body('email')
         .trim()
-        .notEmpty().withMessage('Email is required')
-        .isEmail().withMessage('Please provide a valid email address')
+        .notEmpty().withMessage('Email address is required.')
+        .isEmail().withMessage('Please enter a valid email address (e.g. name@example.com).')
         .normalizeEmail(),
     
     body('password')
-        .notEmpty().withMessage('Password is required')
+        .notEmpty().withMessage('Password is required.')
+        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long.')
 ];
 
 const validateProduct = [
     body('name')
         .trim()
-        .notEmpty().withMessage('Product name is required')
-        .isLength({ min: 2, max: 100 }).withMessage('Product name must be between 2 and 100 characters'),
+        .notEmpty().withMessage('Product name is required.')
+        .isLength({ min: 2, max: 100 }).withMessage('Product name must be between 2 and 100 characters.'),
     
     body('category')
         .trim()
-        .notEmpty().withMessage('Category is required'),
+        .notEmpty().withMessage('Category is required.'),
     
     body('price')
-        .notEmpty().withMessage('Price is required')
-        .isFloat({ min: 0.01 }).withMessage('Price must be greater than 0'),
+        .notEmpty().withMessage('Price is required.')
+        .custom(val => {
+            const n = parseFloat(val);
+            if (isNaN(n)) throw new Error('Price must be a valid number (e.g. 25.50).');
+            if (n <= 0) throw new Error('Price must be greater than 0.');
+            if (n > 100000) throw new Error('Price cannot exceed ₹1,00,000.');
+            return true;
+        }),
     
     body('quantity')
         .optional()
-        .isInt({ min: 0 }).withMessage('Quantity must be a positive number'),
+        .custom(val => {
+            if (val === '' || val === undefined || val === null) return true;
+            const n = parseInt(val);
+            if (isNaN(n)) throw new Error('Quantity must be a whole number (e.g. 50).');
+            if (n < 0) throw new Error('Quantity cannot be negative.');
+            return true;
+        }),
     
     body('description')
         .optional()
         .trim()
-        .isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters')
+        .isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters.')
 ];
 
 const validateOrder = [

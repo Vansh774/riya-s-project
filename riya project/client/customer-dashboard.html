@@ -2290,13 +2290,14 @@
 
             <!-- Navigation Links -->
             <nav class="sidebar-nav">
-                <a href="#" data-page="dashboard" class="active">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" data-page="browse">
+                <a href="#" data-page="products" class="active">
                     <i class="fas fa-store"></i>
-                    <span>Browse Products</span>
+                    <span>Products</span>
+                </a>
+                <a href="#" data-page="messages">
+                    <i class="fas fa-comments"></i>
+                    <span>Messages</span>
+                    <span class="nav-badge-orange" id="cust-msg-badge" style="display:none; margin-left:auto;">0</span>
                 </a>
                 <a href="#" data-page="categories">
                     <i class="fas fa-th-list"></i>
@@ -2355,7 +2356,8 @@
                     <!-- Language Selector in Navigation -->
                     <div class="freshfield-lang-dropdown" title="Change Language / भाषा बदलें / ભાષા બદલો">
                         <i class="fas fa-globe"></i>
-                        <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)" aria-label="Select Language">
+                        <select class="freshfield-lang-select" onchange="i18n.setLanguage(this.value)"
+                            aria-label="Select Language">
                             <option value="en">English</option>
                             <option value="hi">हिन्दी</option>
                             <option value="gu">ગુજરાતી</option>
@@ -2390,7 +2392,7 @@
             <main class="dashboard-content">
 
                 <!-- PAGE: DASHBOARD (Overview with Hero, Quick Categories, Featured Picks & Widgets) -->
-                <div id="page-dashboard" class="page-content active">
+                <div id="page-dashboard" class="page-content" style="display:none;">
 
                     <div class="customer-main-grid">
 
@@ -2613,18 +2615,17 @@
                 </div>
 
                 <!-- PAGE: BROWSE ALL PRODUCTS (Dedicated Full Marketplace View) -->
-                <div id="page-browse" class="page-content">
+                <div id="page-browse" class="page-content active" style="display:block;">
                     <div class="section-box" style="margin-bottom:24px;">
                         <div class="section-box-header" style="flex-wrap:wrap; gap:14px; margin-bottom:16px;">
                             <div>
-                                <h2 style="font-family:var(--font-serif); font-size:24px; color:var(--text-dark);">
-                                    Browse All Farm Produce</h2>
-                                <p style="font-size:13px; color:var(--text-muted);">Explore fresh, naturally grown
-                                    produce directly from verified local farms.</p>
+                                <h2
+                                    style="font-family:var(--font-serif); font-size:26px; color:var(--text-dark); letter-spacing:0.5px;">
+                                    PRODUCTS</h2>
                             </div>
 
                             <div class="filters-toolbar" style="margin-left:auto;">
-                                <select id="category-filter" class="select-filter"
+                                <select id="category-filter" class="select-filter" style="display:none;"
                                     onchange="customer.loadBrowseProducts()">
                                     <option value="">All Categories</option>
                                     <option value="Vegetables">Vegetables</option>
@@ -2642,7 +2643,7 @@
                         </div>
 
                         <!-- Category Quick Filter Pills -->
-                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;" id="browse-cat-pills">
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;" id="browse-cat-pills">
                             <button class="select-filter active"
                                 style="background:var(--green-primary); color:white; border-color:var(--green-primary);"
                                 onclick="customer.filterCategoryPill('', this)">All</button>
@@ -2657,6 +2658,9 @@
                             <button class="select-filter" onclick="customer.filterCategoryPill('Organic', this)">🌱
                                 Organic</button>
                         </div>
+
+                        <!-- Specific Product / Produce Selector Bar (Potato, Tomato, Onion, etc.) -->
+                        <div id="customer-produce-selector-container"></div>
 
                         <!-- Browse Products Grid -->
                         <div id="product-grid" class="product-grid">
@@ -2926,6 +2930,30 @@
                                     style="margin-top:10px; width:fit-content;">Save Profile</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- PAGE: MESSAGES (Customer ↔ Farmer Conversations) -->
+                <div id="page-messages" class="page-content">
+                    <div class="section-box" style="margin-bottom:24px;">
+                        <div class="section-box-header" style="margin-bottom:16px;">
+                            <div>
+                                <h2 style="font-family:var(--font-serif); font-size:24px; color:var(--text-dark);">
+                                    Farmer Conversations & Negotiations
+                                </h2>
+                                <p style="font-size:13px; color:var(--text-muted);">
+                                    Direct messages with local farmers. Discuss produce freshness, delivery timings, or
+                                    negotiate fair pricing.
+                                </p>
+                            </div>
+                            <button type="button" class="btn-balance-details" onclick="customer.loadMessages()"
+                                style="margin-left:auto; background:white; padding:8px 16px; border-radius:var(--radius-pill); cursor:pointer;">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="customer-conversations-container">
+                            <!-- Rendered by FFMessaging.loadConversations -->
+                        </div>
                     </div>
                 </div>
 
@@ -3258,66 +3286,86 @@
         <script src="js/api.js?v=2.0.1"></script>
         <script src="js/auth.js?v=2.0.1"></script>
         <script src="js/cart.js?v=2.0.1"></script>
+        <script src="js/features.js?v=2.0.1"></script>
         <script src="js/customer.js?v=2.0.1"></script>
 
         <!-- Report Farmer Grievance Modal -->
-        <div id="modal-customer-report" class="modal-overlay" onclick="if(event.target===this) closeCustomerReportModal()">
-            <div class="modal-card" style="max-width: 520px; width: 100%; background: #FFFFFF; border-radius: 20px; padding: 28px; box-shadow: 0 25px 70px rgba(0,0,0,0.25); border: 1px solid var(--beige-mid);">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px;">
+        <div id="modal-customer-report" class="modal-overlay"
+            onclick="if(event.target===this) closeCustomerReportModal()">
+            <div class="modal-card"
+                style="max-width: 520px; width: 100%; background: #FFFFFF; border-radius: 20px; padding: 28px; box-shadow: 0 25px 70px rgba(0,0,0,0.25); border: 1px solid var(--beige-mid);">
+                <div
+                    style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px;">
                     <div>
-                        <h3 style="font-family: var(--font-serif); font-size: 22px; color: var(--text-dark); margin: 0;">
+                        <h3
+                            style="font-family: var(--font-serif); font-size: 22px; color: var(--text-dark); margin: 0;">
                             <i class="fa-solid fa-flag" style="color: #D97706; margin-right: 6px;"></i> Report a Farmer
                         </h3>
                         <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
-                            File a complaint directly to FreshField Administration. We investigate every report thoroughly.
+                            File a complaint directly to FreshField Administration. We investigate every report
+                            thoroughly.
                         </p>
                     </div>
-                    <button type="button" onclick="closeCustomerReportModal()" style="background: var(--cream); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">
+                    <button type="button" onclick="closeCustomerReportModal()"
+                        style="background: var(--cream); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
 
                 <form onsubmit="event.preventDefault(); submitCustomerFarmerReport();">
                     <div style="margin-bottom: 14px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                        <label
+                            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
                             Select Agricultural Producer (Farmer) <span style="color: #DC2626;">*</span>
                         </label>
-                        <select id="report-farmer-select" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                        <select id="report-farmer-select" required
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
                             <option value="">Loading farmers list...</option>
                         </select>
                     </div>
 
                     <div style="margin-bottom: 14px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                        <label
+                            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
                             Reason for Complaint <span style="color: #DC2626;">*</span>
                         </label>
-                        <select id="report-reason-select" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                        <select id="report-reason-select" required
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
                             <option value="Poor Quality Produce">Damaged, Spoiled or Poor Quality Produce</option>
                             <option value="Delayed Shipment">Unreasonable Shipping / Dispatch Delay</option>
-                            <option value="Misleading Information">Inaccurate Weight, Variety or False Organic Claim</option>
+                            <option value="Misleading Information">Inaccurate Weight, Variety or False Organic Claim
+                            </option>
                             <option value="Fraud or Overcharging">Fraud, Missing Items, or Overcharging</option>
-                            <option value="Unprofessional Conduct">Unprofessional, Rude or Harassing Communication</option>
+                            <option value="Unprofessional Conduct">Unprofessional, Rude or Harassing Communication
+                            </option>
                             <option value="Other">Other Grievance</option>
                         </select>
                     </div>
 
                     <div style="margin-bottom: 14px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                        <label
+                            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
                             Order Number (Optional)
                         </label>
-                        <input type="text" id="report-order-input" placeholder="e.g. ORD-179023..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
+                        <input type="text" id="report-order-input" placeholder="e.g. ORD-179023..."
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px;">
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
+                        <label
+                            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-dark); margin-bottom: 5px;">
                             Detailed Description of the Issue <span style="color: #DC2626;">*</span>
                         </label>
-                        <textarea id="report-description-input" required rows="4" placeholder="Please provide specific details about what happened..." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                        <textarea id="report-description-input" required rows="4"
+                            placeholder="Please provide specific details about what happened..."
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--beige-mid); font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
                     </div>
 
                     <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                        <button type="button" onclick="closeCustomerReportModal()" style="background: transparent; border: 1px solid var(--beige-mid); padding: 9px 18px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer;">Cancel</button>
-                        <button type="submit" id="btn-submit-customer-report" style="background: #D97706; color: white; border: none; padding: 9px 24px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                        <button type="button" onclick="closeCustomerReportModal()"
+                            style="background: transparent; border: 1px solid var(--beige-mid); padding: 9px 18px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer;">Cancel</button>
+                        <button type="submit" id="btn-submit-customer-report"
+                            style="background: #D97706; color: white; border: none; padding: 9px 24px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-paper-plane"></i> Submit Grievance
                         </button>
                     </div>
@@ -3345,14 +3393,14 @@
                     });
                     const data = await res.json();
                     if (data.success && data.farmers) {
-                        select.innerHTML = '<option value="">Choose farmer...</option>' + 
+                        select.innerHTML = '<option value="">Choose farmer...</option>' +
                             data.farmers.map(f => `
                                 <option value="${f.id}" ${prefillFarmerId == f.id ? 'selected' : ''}>
                                     ${f.name} ${f.farm_name ? `(${f.farm_name})` : ''} - ${f.farm_location || 'India'}
                                 </option>
                             `).join('');
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error('Error fetching farmers:', e);
                 }
             }
@@ -3404,7 +3452,7 @@
                     } else {
                         toast.error(data.message || 'Failed to submit report.');
                     }
-                } catch(e) {
+                } catch (e) {
                     btn.disabled = false;
                     btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Grievance`;
                     toast.error('Unable to reach server. Please check your connection.');
