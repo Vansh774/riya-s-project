@@ -6,6 +6,13 @@ const {
     getConversationMessages,
     sendMessage,
     getUnreadCount,
+    // Negotiation
+    submitOffer,
+    submitCounter,
+    acceptOffer,
+    rejectOffer,
+    getConversationNegotiation,
+    getAcceptedNegotiationForProduct,
     getPriceRules,
     getPriceRuleForProduct,
     submitProductRequest,
@@ -25,6 +32,14 @@ router.get('/conversations/find', authenticate, getOrCreateConversation);
 router.get('/conversations/:id/messages', authenticate, getConversationMessages);
 router.post('/conversations/:id/messages', authenticate, sendMessage);
 router.get('/unread-count', authenticate, getUnreadCount);
+
+// ─── PRICE NEGOTIATION / BARGAINING ROUTES ────────────────────────────────────
+router.post('/conversations/:id/negotiation/offer', authenticate, submitOffer);
+router.post('/conversations/:id/negotiation/counter', authenticate, submitCounter);
+router.post('/conversations/:id/negotiation/accept', authenticate, acceptOffer);
+router.post('/conversations/:id/negotiation/reject', authenticate, rejectOffer);
+router.get('/conversations/:id/negotiation', authenticate, getConversationNegotiation);
+router.get('/negotiations/product/:productId', authenticate, getAcceptedNegotiationForProduct);
 
 // ─── PRICE RULES (public) ─────────────────────────────────────────────────────
 router.get('/price-rules', getPriceRules);

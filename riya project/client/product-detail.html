@@ -2972,6 +2972,8 @@
         const productDetail = {
             currentProduct: null,
             basePrice: 0,
+            agreedPrice: null,        // negotiated price for this customer (null = use public price)
+            conversationId: null,     // conversation ID of the accepted negotiation
             currentMultiplier: 1,
             currentQtyCount: 1,
             galleryImages: [],
@@ -3216,6 +3218,16 @@
                 // Check Wishlist status for current user
                 this.checkWishlistStatus(p.id);
 
+                // Check if this customer has an accepted negotiation for this product
+                this.agreedPrice = null;
+                this.conversationId = null;
+                if (auth.isAuthenticated()) {
+                    const u = auth.getCurrentUser();
+                    if (u && u.role === 'customer') {
+                        this.checkProductNegotiation(p.id);
+                    }
+                }
+
                 // Show main view
                 document.getElementById('product-loading-skeleton').style.display = 'none';
                 document.getElementById('product-main-view').style.display = 'block';
@@ -3223,6 +3235,44 @@
                 // Load Related Products
                 this.loadRelatedProducts(p);
                 this.loadReviews(p.id);
+            },
+
+            async checkProductNegotiation(productId) {
+                try {
+                    const res = await API.negotiation.getByProduct(productId);
+                    if (res && res.success && res.negotiation && res.negotiation.agreed_price) {
+                        const neg = res.negotiation;
+                        this.agreedPrice = parseFloat(neg.agreed_price);
+                        this.conversationId = neg.conversation_id;
+                        // Override basePrice so quantity presets and pricing reflect agreed price
+                        this.basePrice = this.agreedPrice;
+                        this.updatePricing();
+                        this.renderPresets(this.currentProduct ? (this.currentProduct.unit || 'kg') : 'kg');
+
+                        // Show negotiated price banner
+                        let bannerEl = document.getElementById('negotiated-price-banner');
+                        if (!bannerEl) {
+                            bannerEl = document.createElement('div');
+                            bannerEl.id = 'negotiated-price-banner';
+                            const priceBox = document.getElementById('p-price-box');
+                            if (priceBox && priceBox.parentNode) {
+                                priceBox.parentNode.insertBefore(bannerEl, priceBox);
+                            }
+                        }
+                        const publicPrice = parseFloat(this.currentProduct.price) || 0;
+                        const unit = this.currentProduct.unit || 'kg';
+                        bannerEl.style.cssText = 'background:#F0FDF4;border:1.5px solid #A7F3D0;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+                        bannerEl.innerHTML = `
+                            <i class="fa-solid fa-circle-check" style="color:#15803D;font-size:16px;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:12px;font-weight:600;color:#15803D;margin-bottom:2px;"><i class="fa-solid fa-handshake" style="margin-right:4px;"></i>Negotiated Price Locked In</div>
+                                <div style="font-size:12px;color:#4B5563;">Your agreed price: <strong style="color:#15803D;font-size:15px;">&#x20B9;${this.agreedPrice.toFixed(2)}/${unit}</strong> &nbsp;<del style="color:#9B9D95;font-size:12px;">&#x20B9;${publicPrice.toFixed(2)}/${unit}</del></div>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    // No accepted negotiation — use public price, no banner
+                }
             },
 
             async checkWishlistStatus(productId) {
@@ -3471,7 +3521,9 @@
         function addToCartCurrent() {
             if (!productDetail.currentProduct) return;
             const p = productDetail.currentProduct;
-            const computedPrice = parseFloat((productDetail.basePrice * productDetail.currentMultiplier).toFixed(2));
+            // Use agreedPrice if available (negotiated), otherwise public price
+            const effectiveBase = productDetail.agreedPrice !== null ? productDetail.agreedPrice : productDetail.basePrice;
+            const computedPrice = parseFloat((effectiveBase * productDetail.currentMultiplier).toFixed(2));
 
             let img = p.image_url || 'assets/images/tomatoes.png';
             if (img && !img.startsWith('http') && !img.startsWith('assets/')) img = `http://localhost:5000${img}`;
@@ -3485,7 +3537,9 @@
                 image: img,
                 farmer: p.farmer_name || p.farm_name || 'Local Farm',
                 quantity: productDetail.currentQtyCount,
-                maxQuantity: p.quantity || 999
+                maxQuantity: p.quantity || 999,
+                conversation_id: productDetail.conversationId || null,
+                is_negotiated: productDetail.agreedPrice !== null
             }, btn);
         }
 

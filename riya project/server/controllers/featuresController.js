@@ -84,7 +84,7 @@ const getMyConversations = async (req, res) => {
         let query;
         if (userRole === 'customer') {
             query = `
-                SELECT c.id, c.subject, c.created_at, c.updated_at,
+                SELECT c.id, c.subject, c.negotiation_status, c.agreed_price, c.current_offer_price, c.current_offer_by, c.expires_at, c.created_at, c.updated_at,
                        farm.id as farmer_id, farm.name as farmer_name, farm.farm_name,
                        p.id as product_id, p.name as product_name, p.price as product_price, p.unit as product_unit,
                        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.is_read = FALSE AND m.sender_id != ?) as unread_count,
@@ -98,7 +98,7 @@ const getMyConversations = async (req, res) => {
             `;
         } else {
             query = `
-                SELECT c.id, c.subject, c.created_at, c.updated_at,
+                SELECT c.id, c.subject, c.negotiation_status, c.agreed_price, c.current_offer_price, c.current_offer_by, c.expires_at, c.created_at, c.updated_at,
                        cust.id as customer_id, cust.name as customer_name, cust.email as customer_email,
                        p.id as product_id, p.name as product_name, p.price as product_price, p.unit as product_unit,
                        (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.is_read = FALSE AND m.sender_id != ?) as unread_count,
@@ -261,6 +261,615 @@ const getUnreadCount = async (req, res) => {
     } catch (err) {
         console.error('getUnreadCount error:', err);
         res.status(500).json({ success: false, unread_count: 0 });
+    }
+};
+
+// ─────────────────────────────────────────────────
+// PRICE NEGOTIATION / BARGAINING SYSTEM
+// ─────────────────────────────────────────────────
+
+// POST /api/features/conversations/:id/negotiation/offer
+// Customer submits initial offer or new offer
+const submitOffer = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        const convId = parseInt(req.params.id, 10);
+        const { offer_price } = req.body;
+
+        if (isNaN(convId)) {
+            return res.status(400).json({ success: false, message: 'Invalid conversation ID' });
+        }
+
+        const price = parseFloat(offer_price);
+        if (isNaN(price) || !isFinite(price) || price <= 0 || price > 100000) {
+            return res.status(400).json({ success: false, message: 'Please enter a valid offer price greater than 0.' });
+        }
+
+        // Must be customer making the offer
+        if (userRole !== 'customer') {
+            return res.status(403).json({ success: false, message: 'Only customers can initiate a price offer.' });
+        }
+
+        // Conversation check
+        const [convRows] = await pool.query('SELECT * FROM conversations WHERE id = ?', [convId]);
+        if (convRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found.' });
+        }
+        const conv = convRows[0];
+        if (conv.customer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+        if (!conv.product_id) {
+            return res.status(400).json({ success: false, message: 'This conversation is not linked to any product.' });
+        }
+
+        // Product verification
+        const [prods] = await pool.query('SELECT * FROM products WHERE id = ? AND is_available = TRUE', [conv.product_id]);
+        if (prods.length === 0) {
+            return res.status(400).json({ success: false, message: 'Product is unavailable or out of stock.' });
+        }
+        const product = prods[0];
+        const unit = product.unit || 'kg';
+
+        // Check if same offer already pending
+        if (conv.negotiation_status === 'offer_made' && parseFloat(conv.current_offer_price) === price && conv.current_offer_by === 'customer') {
+            return res.status(400).json({ success: false, message: `An offer of ₹${price.toFixed(2)}/${unit} is already pending.` });
+        }
+
+        // Update previous pending offers in negotiation_offers to 'cancelled'
+        await pool.query(
+            "UPDATE negotiation_offers SET status = 'cancelled' WHERE conversation_id = ? AND status = 'pending'",
+            [convId]
+        );
+
+        // Record new offer in negotiation_offers
+        const [offerRes] = await pool.query(
+            `INSERT INTO negotiation_offers 
+             (conversation_id, product_id, customer_id, farmer_id, offered_by, offer_price, status)
+             VALUES (?, ?, ?, ?, 'customer', ?, 'pending')`,
+            [convId, conv.product_id, conv.customer_id, conv.farmer_id, price]
+        );
+
+        // Update conversation state
+        await pool.query(
+            `UPDATE conversations 
+             SET negotiation_status = 'offer_made',
+                 current_offer_price = ?,
+                 current_offer_by = 'customer',
+                 offer_updated_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [price, convId]
+        );
+
+        // Insert message in messages table
+        const msgText = `Customer offered ₹${price.toFixed(2)} / ${unit}`;
+        const [msgResult] = await pool.query(
+            `INSERT INTO messages (conversation_id, sender_id, sender_role, message, message_type)
+             VALUES (?, ?, 'customer', ?, 'offer')`,
+            [convId, userId, msgText]
+        );
+
+        // Notify farmer
+        const [customer] = await pool.query('SELECT name FROM users WHERE id = ?', [userId]);
+        const custName = customer[0]?.name || 'Customer';
+        await pool.query(
+            `INSERT INTO notifications (user_id, title, message, type)
+             VALUES (?, 'New Price Offer', ?, 'order')`,
+            [conv.farmer_id, `${custName} offered ₹${price.toFixed(2)}/${unit} for ${product.name}`]
+        ).catch(() => {});
+
+        // Emit socket event
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`conversation_${convId}`).emit('negotiation_updated', {
+                conversationId: convId,
+                status: 'offer_made',
+                offer_price: price,
+                offered_by: 'customer',
+                unit
+            });
+            const [newMsg] = await pool.query(
+                `SELECT m.*, u.name as sender_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?`,
+                [msgResult.insertId]
+            );
+            if (newMsg.length > 0) {
+                io.to(`conversation_${convId}`).emit('new_message', newMsg[0]);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Offer of ₹${price.toFixed(2)}/${unit} sent successfully!`,
+            negotiation: {
+                id: offerRes.insertId,
+                status: 'offer_made',
+                current_offer_price: price,
+                current_offer_by: 'customer',
+                product_name: product.name,
+                public_price: product.price,
+                unit
+            }
+        });
+    } catch (err) {
+        console.error('submitOffer error:', err);
+        res.status(500).json({ success: false, message: 'Error submitting offer: ' + err.message });
+    }
+};
+
+// POST /api/features/conversations/:id/negotiation/counter
+// Counter offer by either farmer or customer
+const submitCounter = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        const convId = parseInt(req.params.id, 10);
+        const { counter_price } = req.body;
+
+        if (isNaN(convId)) {
+            return res.status(400).json({ success: false, message: 'Invalid conversation ID' });
+        }
+
+        const price = parseFloat(counter_price);
+        if (isNaN(price) || !isFinite(price) || price <= 0 || price > 100000) {
+            return res.status(400).json({ success: false, message: 'Please enter a valid counter price greater than 0.' });
+        }
+
+        const [convRows] = await pool.query('SELECT * FROM conversations WHERE id = ?', [convId]);
+        if (convRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found.' });
+        }
+        const conv = convRows[0];
+
+        // Authorization check
+        if (userRole === 'farmer' && conv.farmer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+        if (userRole === 'customer' && conv.customer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+
+        if (!['offer_made', 'countered'].includes(conv.negotiation_status)) {
+            return res.status(400).json({ success: false, message: 'No active offer available to counter.' });
+        }
+
+        // Cannot counter your own offer
+        if (conv.current_offer_by === userRole) {
+            return res.status(400).json({ success: false, message: 'You cannot counter your own offer. Please wait for a response.' });
+        }
+
+        // Product verification
+        const [prods] = await pool.query('SELECT * FROM products WHERE id = ? AND is_available = TRUE', [conv.product_id]);
+        if (prods.length === 0) {
+            return res.status(400).json({ success: false, message: 'Product is no longer available.' });
+        }
+        const product = prods[0];
+        const unit = product.unit || 'kg';
+
+        // Update previous pending offers to 'countered'
+        await pool.query(
+            "UPDATE negotiation_offers SET status = 'countered', responded_at = NOW() WHERE conversation_id = ? AND status = 'pending'",
+            [convId]
+        );
+
+        // Record counter offer in negotiation_offers
+        const [offerRes] = await pool.query(
+            `INSERT INTO negotiation_offers 
+             (conversation_id, product_id, customer_id, farmer_id, offered_by, offer_price, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+            [convId, conv.product_id, conv.customer_id, conv.farmer_id, userRole, price]
+        );
+
+        // Update conversation state
+        await pool.query(
+            `UPDATE conversations 
+             SET negotiation_status = 'countered',
+                 current_offer_price = ?,
+                 current_offer_by = ?,
+                 offer_updated_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [price, userRole, convId]
+        );
+
+        const senderTitle = userRole === 'farmer' ? 'Farmer' : 'Customer';
+        const msgText = `${senderTitle} submitted a counter offer of ₹${price.toFixed(2)} / ${unit}`;
+        const [msgResult] = await pool.query(
+            `INSERT INTO messages (conversation_id, sender_id, sender_role, message, message_type)
+             VALUES (?, ?, ?, ?, 'counter')`,
+            [convId, userId, userRole, msgText]
+        );
+
+        // Notify other party
+        const recipientId = userRole === 'farmer' ? conv.customer_id : conv.farmer_id;
+        await pool.query(
+            `INSERT INTO notifications (user_id, title, message, type)
+             VALUES (?, 'Counter Offer Received', ?, 'order')`,
+            [recipientId, `${senderTitle} submitted a counter offer of ₹${price.toFixed(2)}/${unit} for ${product.name}`]
+        ).catch(() => {});
+
+        // Emit socket
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`conversation_${convId}`).emit('negotiation_updated', {
+                conversationId: convId,
+                status: 'countered',
+                offer_price: price,
+                offered_by: userRole,
+                unit
+            });
+            const [newMsg] = await pool.query(
+                `SELECT m.*, u.name as sender_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?`,
+                [msgResult.insertId]
+            );
+            if (newMsg.length > 0) {
+                io.to(`conversation_${convId}`).emit('new_message', newMsg[0]);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Counter offer of ₹${price.toFixed(2)}/${unit} submitted successfully!`,
+            negotiation: {
+                id: offerRes.insertId,
+                status: 'countered',
+                current_offer_price: price,
+                current_offer_by: userRole,
+                product_name: product.name,
+                public_price: product.price,
+                unit
+            }
+        });
+    } catch (err) {
+        console.error('submitCounter error:', err);
+        res.status(500).json({ success: false, message: 'Error submitting counter offer: ' + err.message });
+    }
+};
+
+// POST /api/features/conversations/:id/negotiation/accept
+// Accept the active pending offer
+const acceptOffer = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        const convId = parseInt(req.params.id, 10);
+
+        if (isNaN(convId)) {
+            return res.status(400).json({ success: false, message: 'Invalid conversation ID' });
+        }
+
+        const [convRows] = await pool.query('SELECT * FROM conversations WHERE id = ?', [convId]);
+        if (convRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found.' });
+        }
+        const conv = convRows[0];
+
+        // Authorization check
+        if (userRole === 'farmer' && conv.farmer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+        if (userRole === 'customer' && conv.customer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+
+        // Must have an active offer
+        if (!['offer_made', 'countered'].includes(conv.negotiation_status) || !conv.current_offer_price) {
+            return res.status(400).json({ success: false, message: 'No active offer available to accept.' });
+        }
+
+        // Cannot accept your own offer
+        if (conv.current_offer_by === userRole) {
+            return res.status(400).json({ success: false, message: 'You cannot accept your own offer. The other party must accept.' });
+        }
+
+        // Product verification
+        const [prods] = await pool.query('SELECT * FROM products WHERE id = ? AND is_available = TRUE', [conv.product_id]);
+        if (prods.length === 0) {
+            return res.status(400).json({ success: false, message: 'Product is unavailable or out of stock.' });
+        }
+        const product = prods[0];
+        const agreedPrice = parseFloat(conv.current_offer_price);
+        const unit = product.unit || 'kg';
+
+        // Update pending offers in negotiation_offers to 'accepted'
+        await pool.query(
+            `UPDATE negotiation_offers 
+             SET status = 'accepted', responded_at = NOW(), expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR)
+             WHERE conversation_id = ? AND status = 'pending'`,
+            [convId]
+        );
+
+        // Update conversation to ACCEPTED with agreed_price and 24h expiration
+        await pool.query(
+            `UPDATE conversations 
+             SET negotiation_status = 'accepted',
+                 agreed_price = ?,
+                 agreed_at = NOW(),
+                 expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR),
+                 current_offer_price = NULL,
+                 current_offer_by = NULL,
+                 offer_updated_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [agreedPrice, convId]
+        );
+
+        const accepterTitle = userRole === 'farmer' ? 'Farmer' : 'Customer';
+        const msgText = `${accepterTitle} accepted the offer of ₹${agreedPrice.toFixed(2)} / ${unit}.`;
+        const [msgResult] = await pool.query(
+            `INSERT INTO messages (conversation_id, sender_id, sender_role, message, message_type)
+             VALUES (?, ?, ?, ?, 'accept')`,
+            [convId, userId, userRole, msgText]
+        );
+
+        // Notify other party
+        const recipientId = userRole === 'farmer' ? conv.customer_id : conv.farmer_id;
+        await pool.query(
+            `INSERT INTO notifications (user_id, title, message, type)
+             VALUES (?, 'Price Offer Accepted!', ?, 'order')`,
+            [recipientId, `Offer of ₹${agreedPrice.toFixed(2)}/${unit} for ${product.name} was accepted by ${accepterTitle}.`]
+        ).catch(() => {});
+
+        // Emit socket
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`conversation_${convId}`).emit('negotiation_updated', {
+                conversationId: convId,
+                status: 'accepted',
+                agreed_price: agreedPrice,
+                unit
+            });
+            const [newMsg] = await pool.query(
+                `SELECT m.*, u.name as sender_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?`,
+                [msgResult.insertId]
+            );
+            if (newMsg.length > 0) {
+                io.to(`conversation_${convId}`).emit('new_message', newMsg[0]);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Offer of ₹${agreedPrice.toFixed(2)}/${unit} accepted successfully!`,
+            negotiation: {
+                status: 'accepted',
+                agreed_price: agreedPrice,
+                product_name: product.name,
+                public_price: product.price,
+                unit
+            }
+        });
+    } catch (err) {
+        console.error('acceptOffer error:', err);
+        res.status(500).json({ success: false, message: 'Error accepting offer: ' + err.message });
+    }
+};
+
+// POST /api/features/conversations/:id/negotiation/reject
+// Reject the active pending offer
+const rejectOffer = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        const convId = parseInt(req.params.id, 10);
+
+        if (isNaN(convId)) {
+            return res.status(400).json({ success: false, message: 'Invalid conversation ID' });
+        }
+
+        const [convRows] = await pool.query('SELECT * FROM conversations WHERE id = ?', [convId]);
+        if (convRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found.' });
+        }
+        const conv = convRows[0];
+
+        if (userRole === 'farmer' && conv.farmer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+        if (userRole === 'customer' && conv.customer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+
+        if (!['offer_made', 'countered'].includes(conv.negotiation_status)) {
+            return res.status(400).json({ success: false, message: 'No active offer available to reject.' });
+        }
+
+        let unit = 'kg';
+        let prodName = 'Product';
+        if (conv.product_id) {
+            const [p] = await pool.query('SELECT name, unit FROM products WHERE id = ?', [conv.product_id]);
+            if (p.length > 0) {
+                prodName = p[0].name;
+                unit = p[0].unit || 'kg';
+            }
+        }
+
+        // Mark pending offers as rejected
+        await pool.query(
+            "UPDATE negotiation_offers SET status = 'rejected', responded_at = NOW() WHERE conversation_id = ? AND status = 'pending'",
+            [convId]
+        );
+
+        // Update conversation
+        await pool.query(
+            `UPDATE conversations 
+             SET negotiation_status = 'rejected',
+                 current_offer_price = NULL,
+                 current_offer_by = NULL,
+                 offer_updated_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [convId]
+        );
+
+        const rejecterTitle = userRole === 'farmer' ? 'Farmer' : 'Customer';
+        const msgText = `${rejecterTitle} rejected the price offer.`;
+        const [msgResult] = await pool.query(
+            `INSERT INTO messages (conversation_id, sender_id, sender_role, message, message_type)
+             VALUES (?, ?, ?, ?, 'reject')`,
+            [convId, userId, userRole, msgText]
+        );
+
+        // Notify
+        const recipientId = userRole === 'farmer' ? conv.customer_id : conv.farmer_id;
+        await pool.query(
+            `INSERT INTO notifications (user_id, title, message, type)
+             VALUES (?, 'Price Offer Rejected', ?, 'order')`,
+            [recipientId, `${rejecterTitle} rejected the price offer for ${prodName}.`]
+        ).catch(() => {});
+
+        // Emit socket
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`conversation_${convId}`).emit('negotiation_updated', {
+                conversationId: convId,
+                status: 'rejected'
+            });
+            const [newMsg] = await pool.query(
+                `SELECT m.*, u.name as sender_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.id = ?`,
+                [msgResult.insertId]
+            );
+            if (newMsg.length > 0) {
+                io.to(`conversation_${convId}`).emit('new_message', newMsg[0]);
+            }
+        }
+
+        res.json({ success: true, message: 'Offer rejected.' });
+    } catch (err) {
+        console.error('rejectOffer error:', err);
+        res.status(500).json({ success: false, message: 'Error rejecting offer: ' + err.message });
+    }
+};
+
+// GET /api/features/conversations/:id/negotiation
+// Fetch current negotiation state and offer history
+const getConversationNegotiation = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const userRole = req.userRole;
+        const convId = parseInt(req.params.id, 10);
+
+        if (isNaN(convId)) {
+            return res.status(400).json({ success: false, message: 'Invalid conversation ID' });
+        }
+
+        const [convRows] = await pool.query(`
+            SELECT c.*, 
+                   cust.name as customer_name, cust.email as customer_email,
+                   farm.name as farmer_name, farm.farm_name,
+                   p.name as product_name, p.price as product_price, p.unit as product_unit, p.is_available, p.quantity as product_stock, p.image_url as product_image
+            FROM conversations c
+            JOIN users cust ON c.customer_id = cust.id
+            JOIN users farm ON c.farmer_id = farm.id
+            LEFT JOIN products p ON c.product_id = p.id
+            WHERE c.id = ?
+        `, [convId]);
+
+        if (convRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found.' });
+        }
+        const conv = convRows[0];
+
+        if (userRole === 'customer' && conv.customer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+        if (userRole === 'farmer' && conv.farmer_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized conversation access.' });
+        }
+
+        // Check expiration
+        let status = conv.negotiation_status || 'none';
+        if (status === 'accepted' && conv.expires_at && new Date(conv.expires_at) < new Date()) {
+            status = 'expired';
+            await pool.query("UPDATE conversations SET negotiation_status = 'expired' WHERE id = ?", [convId]);
+        }
+
+        // Fetch offer history
+        const [offers] = await pool.query(
+            `SELECT id, offered_by, offer_price, status, created_at, responded_at, expires_at
+             FROM negotiation_offers
+             WHERE conversation_id = ?
+             ORDER BY created_at ASC`,
+            [convId]
+        );
+
+        res.json({
+            success: true,
+            conversation: {
+                id: conv.id,
+                customer_id: conv.customer_id,
+                customer_name: conv.customer_name,
+                farmer_id: conv.farmer_id,
+                farmer_name: conv.farmer_name,
+                product_id: conv.product_id,
+                product_name: conv.product_name,
+                product_price: conv.product_price,
+                product_unit: conv.product_unit || 'kg',
+                product_image: conv.product_image,
+                is_available: conv.is_available,
+                product_stock: conv.product_stock
+            },
+            negotiation: {
+                status,
+                agreed_price: conv.agreed_price,
+                agreed_at: conv.agreed_at,
+                current_offer_price: conv.current_offer_price,
+                current_offer_by: conv.current_offer_by,
+                expires_at: conv.expires_at,
+                offers
+            }
+        });
+    } catch (err) {
+        console.error('getConversationNegotiation error:', err);
+        res.status(500).json({ success: false, message: 'Error fetching negotiation details: ' + err.message });
+    }
+};
+
+// GET /api/features/negotiations/product/:productId
+// Check if current logged-in customer has an active agreed price for this product
+const getAcceptedNegotiationForProduct = async (req, res) => {
+    try {
+        const customerId = req.userId;
+        const productId = parseInt(req.params.productId, 10);
+
+        if (isNaN(productId)) {
+            return res.status(400).json({ success: false, message: 'Invalid product ID' });
+        }
+
+        const [convs] = await pool.query(`
+            SELECT c.id as conversation_id, c.agreed_price, c.agreed_at, c.expires_at,
+                   p.name as product_name, p.price as public_price, p.unit as product_unit,
+                   farm.name as farmer_name, farm.farm_name
+            FROM conversations c
+            JOIN products p ON c.product_id = p.id
+            JOIN users farm ON c.farmer_id = farm.id
+            WHERE c.customer_id = ?
+              AND c.product_id = ?
+              AND c.negotiation_status = 'accepted'
+              AND c.agreed_price IS NOT NULL
+              AND (c.expires_at IS NULL OR c.expires_at > NOW())
+              AND p.is_available = TRUE
+            ORDER BY c.agreed_at DESC
+            LIMIT 1
+        `, [customerId, productId]);
+
+        if (convs.length > 0) {
+            return res.json({
+                success: true,
+                has_negotiation: true,
+                negotiation: convs[0]
+            });
+        }
+
+        res.json({
+            success: true,
+            has_negotiation: false,
+            negotiation: null
+        });
+    } catch (err) {
+        console.error('getAcceptedNegotiationForProduct error:', err);
+        res.status(500).json({ success: false, message: 'Error checking product negotiation: ' + err.message });
     }
 };
 
@@ -584,6 +1193,13 @@ module.exports = {
     getConversationMessages,
     sendMessage,
     getUnreadCount,
+    // Price Negotiation
+    submitOffer,
+    submitCounter,
+    acceptOffer,
+    rejectOffer,
+    getConversationNegotiation,
+    getAcceptedNegotiationForProduct,
     // Price rules
     getPriceRules,
     getPriceRuleForProduct,

@@ -259,6 +259,18 @@ async putFormData(endpoint, formData) {
     },
 
     // ============================================
+    // NEGOTIATION / BARGAINING API
+    // ============================================
+    negotiation: {
+        submitOffer: (convId, offer_price) => API.post(`/features/conversations/${convId}/negotiation/offer`, { offer_price }),
+        submitCounter: (convId, counter_price) => API.post(`/features/conversations/${convId}/negotiation/counter`, { counter_price }),
+        accept: (convId) => API.post(`/features/conversations/${convId}/negotiation/accept`),
+        reject: (convId) => API.post(`/features/conversations/${convId}/negotiation/reject`),
+        getDetails: (convId) => API.get(`/features/conversations/${convId}/negotiation`),
+        getByProduct: (productId) => API.get(`/features/negotiations/product/${productId}`)
+    },
+
+    // ============================================
     // PRICE RULES API
     // ============================================
     priceRules: {

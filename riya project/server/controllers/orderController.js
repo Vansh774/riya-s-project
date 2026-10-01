@@ -47,15 +47,49 @@ const createOrder = async (req, res) => {
                     throw new Error(`Insufficient stock for ${product.name}`);
                 }
 
-                const itemTotal = product.price * item.quantity;
+                // SECURE PRICE DETERMINATION:
+                // Server calculates price. NEVER trust client-provided price.
+                let unitPrice = parseFloat(product.price);
+                let isNegotiated = false;
+
+                // Check if this customer has a valid accepted, unexpired negotiation for this product & farmer
+                let convQuery = `
+                    SELECT id, agreed_price, expires_at 
+                    FROM conversations 
+                    WHERE customer_id = ? 
+                      AND product_id = ? 
+                      AND farmer_id = ? 
+                      AND negotiation_status = 'accepted'
+                      AND agreed_price IS NOT NULL
+                      AND (expires_at IS NULL OR expires_at > NOW())
+                `;
+                const convParams = [customerId, product.id, product.farmer_id];
+                if (item.conversation_id) {
+                    convQuery += ' AND id = ?';
+                    convParams.push(parseInt(item.conversation_id, 10));
+                }
+                convQuery += ' ORDER BY agreed_at DESC LIMIT 1';
+
+                const [convs] = await connection.query(convQuery, convParams);
+
+                if (convs.length > 0) {
+                    const agreed = parseFloat(convs[0].agreed_price);
+                    if (!isNaN(agreed) && agreed > 0) {
+                        unitPrice = agreed;
+                        isNegotiated = true;
+                    }
+                }
+
+                const itemTotal = parseFloat((unitPrice * item.quantity).toFixed(2));
                 totalAmount += itemTotal;
 
                 orderItems.push({
                     product_id: product.id,
                     farmer_id: product.farmer_id,
                     quantity: item.quantity,
-                    price: product.price,
-                    total: itemTotal
+                    price: unitPrice,
+                    total: itemTotal,
+                    is_negotiated: isNegotiated
                 });
             }
 
@@ -94,13 +128,13 @@ const createOrder = async (req, res) => {
 
             const orderId = orderResult.insertId;
 
-            // Create order items
+            // Create order items with verified unit price and negotiation status
             for (const item of orderItems) {
                 await connection.query(
                     `INSERT INTO order_items 
-                     (order_id, product_id, farmer_id, quantity, price, total)
-                     VALUES (?, ?, ?, ?, ?, ?)`,
-                    [orderId, item.product_id, item.farmer_id, item.quantity, item.price, item.total]
+                     (order_id, product_id, farmer_id, quantity, price, total, is_negotiated)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [orderId, item.product_id, item.farmer_id, item.quantity, item.price, item.total, item.is_negotiated ? 1 : 0]
                 );
             }
 

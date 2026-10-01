@@ -304,8 +304,11 @@ const FFPriceRules = {
 // ─────────────────────────────────────────────────────────────────────────────
 const FFMessaging = {
     currentConvId: null,
+    currentConv: null,
+    currentNegotiation: null,
     pollTimer: null,
     lastMessageCount: 0,
+    pollTick: 0,
 
     // ── Open a chat with a farmer for a product ──────────────────
     async openChat(farmerId, productId, farmerName, productName) {
@@ -318,7 +321,7 @@ const FFMessaging = {
                 const token = localStorage.getItem('token');
                 let url = `/api/features/conversations/find?farmer_id=${farmerId}`;
                 if (productId) url += `&product_id=${productId}`;
-                const fetchRes = await fetch(url, {
+                const fetchRes = await fetch(ffGetApiUrl(url), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 res = await fetchRes.json();
@@ -329,9 +332,11 @@ const FFMessaging = {
                 return;
             }
             const conv = res.conversation;
-            this.renderChatModal(conv, farmerName, productName);
             this.currentConvId = conv.id;
+            this.currentConv = conv;
+            this.renderChatModal(conv, farmerName, productName);
             await this.loadMessages(conv.id);
+            await this.loadNegotiation(conv.id);
             this.startPolling(conv.id);
         } catch (e) {
             console.error('openChat error:', e);
@@ -343,8 +348,10 @@ const FFMessaging = {
     async openChatById(convId, convSummary = null) {
         if (!convId) return;
         this.currentConvId = convId;
-        this.renderChatModal(convSummary || { id: convId });
+        this.currentConv = convSummary || { id: convId };
+        this.renderChatModal(this.currentConv);
         await this.loadMessages(convId);
+        await this.loadNegotiation(convId);
         this.startPolling(convId);
     },
 
@@ -377,11 +384,12 @@ const FFMessaging = {
                 </div>
                 <button class="ff-chat-close" onclick="FFMessaging.closeChat()"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <!-- Dynamic Bargaining / Negotiation Area -->
+            <div id="ff-chat-negotiation-area" class="ff-chat-negotiation-area" style="display:none;"></div>
             <div class="ff-chat-messages" id="ff-chat-messages">
                 <div class="ff-chat-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading messages…</div>
             </div>
             <div class="ff-chat-footer">
-                ${pName ? `<div class="ff-chat-bargain-hint"><i class="fa-solid fa-lightbulb"></i> <strong>Price Negotiation:</strong> You can discuss quantity discounts or suggest a fair price here.</div>` : ''}
                 <div class="ff-chat-input-row">
                     <textarea id="ff-chat-input" class="ff-chat-textarea" placeholder="Type your message here…" rows="2" maxlength="2000"></textarea>
                     <button class="ff-chat-send-btn" id="ff-chat-send-btn" onclick="FFMessaging.sendMessage()" title="Send Message">
@@ -418,6 +426,475 @@ const FFMessaging = {
         document.body.style.overflow = '';
         this.stopPolling();
         this.currentConvId = null;
+        this.currentConv = null;
+        this.currentNegotiation = null;
+    },
+
+    // ── Load Negotiation details for active conversation ───────────────────
+    async loadNegotiation(convId, silent = false) {
+        const area = document.getElementById('ff-chat-negotiation-area');
+        if (!area || !convId) return;
+
+        try {
+            let res;
+            if (typeof API !== 'undefined' && API.negotiation) {
+                res = await API.negotiation.getDetails(convId);
+            } else {
+                const token = localStorage.getItem('token');
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/negotiation`), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                res = await fetchRes.json();
+            }
+
+            if (res && res.success) {
+                this.currentNegotiation = res.negotiation;
+                if (res.conversation) {
+                    this.currentConv = { ...this.currentConv, ...res.conversation };
+                }
+                this.renderNegotiationArea();
+            }
+        } catch (e) {
+            if (!silent) console.warn('loadNegotiation error:', e);
+        }
+    },
+
+    // ── Render Structured Negotiation / Bargaining Area ─────────────────────
+    renderNegotiationArea() {
+        const area = document.getElementById('ff-chat-negotiation-area');
+        if (!area) return;
+
+        const conv = this.currentConv;
+        const neg = this.currentNegotiation || {};
+        if (!conv || !conv.product_id) {
+            area.innerHTML = '';
+            area.style.display = 'none';
+            return;
+        }
+
+        area.style.display = 'block';
+
+        const user = typeof auth !== 'undefined' ? auth.getCurrentUser() : (JSON.parse(localStorage.getItem('user') || 'null'));
+        const isCustomer = !user || user.role === 'customer';
+        const pName = conv.product_name || 'Produce Item';
+        const pPrice = parseFloat(conv.product_price || 0).toFixed(2);
+        const pUnit = conv.product_unit || 'kg';
+        const status = neg.status || conv.negotiation_status || 'none';
+        const currentOffer = neg.current_offer_price ? parseFloat(neg.current_offer_price).toFixed(2) : (conv.current_offer_price ? parseFloat(conv.current_offer_price).toFixed(2) : null);
+        const agreedPrice = neg.agreed_price ? parseFloat(neg.agreed_price).toFixed(2) : (conv.agreed_price ? parseFloat(conv.agreed_price).toFixed(2) : null);
+        const offeredBy = neg.current_offer_by || conv.current_offer_by; // 'customer' or 'farmer'
+
+        // 1. ACCEPTED STATE
+        if (status === 'accepted' && agreedPrice) {
+            area.innerHTML = `
+            <div class="ff-bargain-card ff-bargain-accepted">
+                <div class="ff-bargain-header">
+                    <span class="ff-bargain-badge success"><i class="fa-solid fa-circle-check"></i> Price Accepted</span>
+                    <span class="ff-bargain-meta">Public Price: <del>₹${pPrice}/${pUnit}</del></span>
+                </div>
+                <div class="ff-bargain-body">
+                    <div class="ff-bargain-agreed-box">
+                        <div class="ff-bargain-price-col">
+                            <span class="ff-bargain-label">Agreed Price</span>
+                            <span class="ff-bargain-agreed-val">₹${agreedPrice}<small>/${pUnit}</small></span>
+                        </div>
+                        ${isCustomer ? `
+                        <button class="ff-bargain-btn btn-buy-agreed" onclick="FFMessaging.buyAtAgreedPrice(${conv.id}, ${conv.product_id}, '${this.escapeQuote(pName)}', ${agreedPrice}, '${this.escapeQuote(conv.product_image || '')}', '${this.escapeQuote(conv.farmer_name || conv.farm_name || '')}')">
+                            <i class="fa-solid fa-cart-shopping"></i> Buy at ₹${agreedPrice}/${pUnit}
+                        </button>` : `
+                        <div class="ff-bargain-farmer-note">
+                            <i class="fa-solid fa-circle-info"></i> Agreed with ${this.escapeHtml(conv.customer_name || 'Customer')}. Public price remains ₹${pPrice}/${pUnit}.
+                        </div>`}
+                    </div>
+                    <div class="ff-bargain-subtext">
+                        ${isCustomer ? 'Your negotiated price is locked in for checkout. Normal product public price is unchanged for other customers.' : 'Order will be placed at agreed price once customer checks out.'}
+                    </div>
+                </div>
+            </div>`;
+            return;
+        }
+
+        // 2. OFFER MADE (by Customer)
+        if (status === 'offer_made') {
+            if (isCustomer) {
+                area.innerHTML = `
+                <div class="ff-bargain-card ff-bargain-pending">
+                    <div class="ff-bargain-header">
+                        <span class="ff-bargain-badge info"><i class="fa-solid fa-clock"></i> Offer Sent</span>
+                        <span class="ff-bargain-meta">Public Price: ₹${pPrice}/${pUnit}</span>
+                    </div>
+                    <div class="ff-bargain-body">
+                        <div class="ff-bargain-pending-txt">
+                            You offered <strong>₹${currentOffer}/${pUnit}</strong>. Waiting for the farmer to respond.
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                // Farmer view
+                area.innerHTML = `
+                <div class="ff-bargain-card ff-bargain-actionable">
+                    <div class="ff-bargain-header">
+                        <span class="ff-bargain-badge alert"><i class="fa-solid fa-tag"></i> Customer Offer</span>
+                        <span class="ff-bargain-meta">Public Price: ₹${pPrice}/${pUnit}</span>
+                    </div>
+                    <div class="ff-bargain-body">
+                        <div class="ff-bargain-offer-callout">
+                            <span>${this.escapeHtml(conv.customer_name || 'Customer')} offered:</span>
+                            <span class="ff-offer-highlight">₹${currentOffer} / ${pUnit}</span>
+                        </div>
+                        <div class="ff-bargain-btn-row">
+                            <button class="ff-bargain-btn btn-accept" onclick="FFMessaging.acceptOffer(${conv.id})">
+                                <i class="fa-solid fa-check"></i> Accept ₹${currentOffer}
+                            </button>
+                            <button class="ff-bargain-btn btn-counter" onclick="FFMessaging.toggleCounterForm(${conv.id})">
+                                <i class="fa-solid fa-reply"></i> Counter Offer
+                            </button>
+                            <button class="ff-bargain-btn btn-reject" onclick="FFMessaging.rejectOffer(${conv.id})">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                        <div id="ff-counter-panel-${conv.id}" class="ff-counter-panel" style="display:none; margin-top:10px;">
+                            <div class="ff-bargain-input-row">
+                                <span class="ff-input-prefix">₹</span>
+                                <input type="number" id="ff-counter-val-${conv.id}" class="ff-counter-input" placeholder="Counter price" step="0.5" min="1" max="10000">
+                                <span class="ff-input-suffix">/${pUnit}</span>
+                                <button class="ff-bargain-btn btn-submit-counter" onclick="FFMessaging.sendCounter(${conv.id})">
+                                    Send Counter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            return;
+        }
+
+        // 3. COUNTERED (by Farmer or Customer)
+        if (status === 'countered') {
+            if (offeredBy === 'farmer') {
+                if (isCustomer) {
+                    area.innerHTML = `
+                    <div class="ff-bargain-card ff-bargain-actionable">
+                        <div class="ff-bargain-header">
+                            <span class="ff-bargain-badge alert"><i class="fa-solid fa-reply"></i> Farmer Counter Offer</span>
+                            <span class="ff-bargain-meta">Public Price: ₹${pPrice}/${pUnit}</span>
+                        </div>
+                        <div class="ff-bargain-body">
+                            <div class="ff-bargain-offer-callout">
+                                <span>Farmer proposed counter price:</span>
+                                <span class="ff-offer-highlight">₹${currentOffer} / ${pUnit}</span>
+                            </div>
+                            <div class="ff-bargain-btn-row">
+                                <button class="ff-bargain-btn btn-accept" onclick="FFMessaging.acceptOffer(${conv.id})">
+                                    <i class="fa-solid fa-check"></i> Accept ₹${currentOffer}
+                                </button>
+                                <button class="ff-bargain-btn btn-counter" onclick="FFMessaging.toggleCounterForm(${conv.id})">
+                                    <i class="fa-solid fa-reply"></i> Counter Offer
+                                </button>
+                                <button class="ff-bargain-btn btn-reject" onclick="FFMessaging.rejectOffer(${conv.id})">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </div>
+                            <div id="ff-counter-panel-${conv.id}" class="ff-counter-panel" style="display:none; margin-top:10px;">
+                                <div class="ff-bargain-input-row">
+                                    <span class="ff-input-prefix">₹</span>
+                                    <input type="number" id="ff-counter-val-${conv.id}" class="ff-counter-input" placeholder="Your counter price" step="0.5" min="1" max="10000">
+                                    <span class="ff-input-suffix">/${pUnit}</span>
+                                    <button class="ff-bargain-btn btn-submit-counter" onclick="FFMessaging.sendCounter(${conv.id})">
+                                        Send Counter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                } else {
+                    area.innerHTML = `
+                    <div class="ff-bargain-card ff-bargain-pending">
+                        <div class="ff-bargain-header">
+                            <span class="ff-bargain-badge info"><i class="fa-solid fa-clock"></i> Counter Sent</span>
+                            <span class="ff-bargain-meta">Public: ₹${pPrice}/${pUnit}</span>
+                        </div>
+                        <div class="ff-bargain-body">
+                            <div class="ff-bargain-pending-txt">
+                                You counter-offered <strong>₹${currentOffer}/${pUnit}</strong>. Waiting for customer response.
+                            </div>
+                        </div>
+                    </div>`;
+                }
+            } else {
+                // Customer countered back
+                if (!isCustomer) {
+                    area.innerHTML = `
+                    <div class="ff-bargain-card ff-bargain-actionable">
+                        <div class="ff-bargain-header">
+                            <span class="ff-bargain-badge alert"><i class="fa-solid fa-reply"></i> Customer Counter Offer</span>
+                            <span class="ff-bargain-meta">Public Price: ₹${pPrice}/${pUnit}</span>
+                        </div>
+                        <div class="ff-bargain-body">
+                            <div class="ff-bargain-offer-callout">
+                                <span>${this.escapeHtml(conv.customer_name || 'Customer')} countered:</span>
+                                <span class="ff-offer-highlight">₹${currentOffer} / ${pUnit}</span>
+                            </div>
+                            <div class="ff-bargain-btn-row">
+                                <button class="ff-bargain-btn btn-accept" onclick="FFMessaging.acceptOffer(${conv.id})">
+                                    <i class="fa-solid fa-check"></i> Accept ₹${currentOffer}
+                                </button>
+                                <button class="ff-bargain-btn btn-counter" onclick="FFMessaging.toggleCounterForm(${conv.id})">
+                                    <i class="fa-solid fa-reply"></i> Counter Offer
+                                </button>
+                                <button class="ff-bargain-btn btn-reject" onclick="FFMessaging.rejectOffer(${conv.id})">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </div>
+                            <div id="ff-counter-panel-${conv.id}" class="ff-counter-panel" style="display:none; margin-top:10px;">
+                                <div class="ff-bargain-input-row">
+                                    <span class="ff-input-prefix">₹</span>
+                                    <input type="number" id="ff-counter-val-${conv.id}" class="ff-counter-input" placeholder="Counter price" step="0.5" min="1" max="10000">
+                                    <span class="ff-input-suffix">/${pUnit}</span>
+                                    <button class="ff-bargain-btn btn-submit-counter" onclick="FFMessaging.sendCounter(${conv.id})">
+                                        Send Counter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                } else {
+                    area.innerHTML = `
+                    <div class="ff-bargain-card ff-bargain-pending">
+                        <div class="ff-bargain-header">
+                            <span class="ff-bargain-badge info"><i class="fa-solid fa-clock"></i> Counter Sent</span>
+                            <span class="ff-bargain-meta">Public: ₹${pPrice}/${pUnit}</span>
+                        </div>
+                        <div class="ff-bargain-body">
+                            <div class="ff-bargain-pending-txt">
+                                You counter-offered <strong>₹${currentOffer}/${pUnit}</strong>. Waiting for farmer response.
+                            </div>
+                        </div>
+                    </div>`;
+                }
+            }
+            return;
+        }
+
+        // 4. REJECTED STATE
+        if (status === 'rejected') {
+            area.innerHTML = `
+            <div class="ff-bargain-card ff-bargain-rejected">
+                <div class="ff-bargain-header">
+                    <span class="ff-bargain-badge danger"><i class="fa-solid fa-circle-xmark"></i> Offer Rejected</span>
+                    <span class="ff-bargain-meta">Public Price: ₹${pPrice}/${pUnit}</span>
+                </div>
+                <div class="ff-bargain-body">
+                    <div class="ff-bargain-rejected-txt">
+                        The previous negotiation offer was rejected.
+                        ${isCustomer ? `<button class="ff-bargain-btn btn-retry-offer" onclick="FFMessaging.showNewOfferForm(${conv.id})">Submit New Offer</button>` : ''}
+                    </div>
+                    <div id="ff-new-offer-panel-${conv.id}" class="ff-counter-panel" style="display:none; margin-top:8px;">
+                        <div class="ff-bargain-input-row">
+                            <span class="ff-input-prefix">₹</span>
+                            <input type="number" id="ff-offer-val-${conv.id}" class="ff-counter-input" placeholder="New offer price" step="0.5" min="1" max="10000">
+                            <span class="ff-input-suffix">/${pUnit}</span>
+                            <button class="ff-bargain-btn btn-send-offer" onclick="FFMessaging.sendOffer(${conv.id})">
+                                Send Offer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            return;
+        }
+
+        // 5. NONE STATE (Default - Customer can make offer)
+        if (isCustomer) {
+            area.innerHTML = `
+            <div class="ff-bargain-card">
+                <div class="ff-bargain-header">
+                    <span class="ff-bargain-badge primary"><i class="fa-solid fa-handshake"></i> Negotiate Price</span>
+                    <span class="ff-bargain-meta">Current Price: <strong>₹${pPrice}/${pUnit}</strong></span>
+                </div>
+                <div class="ff-bargain-body">
+                    <div class="ff-bargain-input-row">
+                        <span class="ff-input-prefix">₹</span>
+                        <input type="number" id="ff-offer-val-${conv.id}" class="ff-counter-input" placeholder="Your offer price" step="0.5" min="1" max="10000">
+                        <span class="ff-input-suffix">/${pUnit}</span>
+                        <button class="ff-bargain-btn btn-send-offer" onclick="FFMessaging.sendOffer(${conv.id})">
+                            <i class="fa-solid fa-paper-plane"></i> Send Offer
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            area.innerHTML = `
+            <div class="ff-bargain-card ff-bargain-farmer-none">
+                <div class="ff-bargain-header">
+                    <span class="ff-bargain-badge neutral"><i class="fa-solid fa-tag"></i> Produce Listed</span>
+                    <span class="ff-bargain-meta">Current Price: ₹${pPrice}/${pUnit}</span>
+                </div>
+                <div class="ff-bargain-body">
+                    <div class="ff-bargain-farmer-none-txt">
+                        No active price offer from customer yet. Customer can submit a structured offer here.
+                    </div>
+                </div>
+            </div>`;
+        }
+    },
+
+    toggleCounterForm(convId) {
+        const panel = document.getElementById(`ff-counter-panel-${convId}`);
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display === 'block') {
+                const inp = document.getElementById(`ff-counter-val-${convId}`);
+                if (inp) inp.focus();
+            }
+        }
+    },
+
+    showNewOfferForm(convId) {
+        const panel = document.getElementById(`ff-new-offer-panel-${convId}`);
+        if (panel) {
+            panel.style.display = 'block';
+            const inp = document.getElementById(`ff-offer-val-${convId}`);
+            if (inp) inp.focus();
+        }
+    },
+
+    async sendOffer(convId) {
+        const inp = document.getElementById(`ff-offer-val-${convId}`);
+        if (!inp) return;
+        const val = parseFloat(inp.value);
+        if (isNaN(val) || val <= 0) {
+            this.showToast('Please enter a valid offer price greater than ₹0.', 'warning');
+            inp.focus();
+            return;
+        }
+
+        try {
+            let res;
+            if (typeof API !== 'undefined' && API.negotiation) {
+                res = await API.negotiation.submitOffer(convId, val);
+            } else {
+                const token = localStorage.getItem('token');
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/negotiation/offer`), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ offer_price: val })
+                });
+                res = await fetchRes.json();
+            }
+
+            if (!res.success) throw new Error(res.message);
+            this.showToast(res.message || 'Offer submitted successfully!', 'success');
+            await this.loadNegotiation(convId);
+            await this.loadMessages(convId);
+        } catch (e) {
+            this.showToast('Failed to submit offer: ' + e.message, 'error');
+        }
+    },
+
+    async sendCounter(convId) {
+        const inp = document.getElementById(`ff-counter-val-${convId}`);
+        if (!inp) return;
+        const val = parseFloat(inp.value);
+        if (isNaN(val) || val <= 0) {
+            this.showToast('Please enter a valid counter price greater than ₹0.', 'warning');
+            inp.focus();
+            return;
+        }
+
+        try {
+            let res;
+            if (typeof API !== 'undefined' && API.negotiation) {
+                res = await API.negotiation.submitCounter(convId, val);
+            } else {
+                const token = localStorage.getItem('token');
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/negotiation/counter`), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ counter_price: val })
+                });
+                res = await fetchRes.json();
+            }
+
+            if (!res.success) throw new Error(res.message);
+            this.showToast(res.message || 'Counter offer submitted successfully!', 'success');
+            await this.loadNegotiation(convId);
+            await this.loadMessages(convId);
+        } catch (e) {
+            this.showToast('Failed to submit counter offer: ' + e.message, 'error');
+        }
+    },
+
+    async acceptOffer(convId) {
+        if (!confirm('Are you sure you want to accept this price offer?')) return;
+
+        try {
+            let res;
+            if (typeof API !== 'undefined' && API.negotiation) {
+                res = await API.negotiation.accept(convId);
+            } else {
+                const token = localStorage.getItem('token');
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/negotiation/accept`), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+                res = await fetchRes.json();
+            }
+
+            if (!res.success) throw new Error(res.message);
+            this.showToast(res.message || 'Price offer accepted!', 'success');
+            await this.loadNegotiation(convId);
+            await this.loadMessages(convId);
+        } catch (e) {
+            this.showToast('Failed to accept offer: ' + e.message, 'error');
+        }
+    },
+
+    async rejectOffer(convId) {
+        if (!confirm('Are you sure you want to reject this offer?')) return;
+
+        try {
+            let res;
+            if (typeof API !== 'undefined' && API.negotiation) {
+                res = await API.negotiation.reject(convId);
+            } else {
+                const token = localStorage.getItem('token');
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/negotiation/reject`), {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+                res = await fetchRes.json();
+            }
+
+            if (!res.success) throw new Error(res.message);
+            this.showToast(res.message || 'Offer rejected.', 'info');
+            await this.loadNegotiation(convId);
+            await this.loadMessages(convId);
+        } catch (e) {
+            this.showToast('Failed to reject offer: ' + e.message, 'error');
+        }
+    },
+
+    buyAtAgreedPrice(convId, productId, productName, agreedPrice, image, farmerName) {
+        if (typeof cart !== 'undefined') {
+            cart.addItem({
+                id: productId,
+                name: productName,
+                price: parseFloat(agreedPrice),
+                image: image || 'assets/images/tomatoes.png',
+                farmer: farmerName || 'Local Farm',
+                quantity: 1,
+                conversation_id: convId,
+                is_negotiated: true
+            });
+            this.closeChat();
+            setTimeout(() => {
+                cart.toggle();
+            }, 300);
+            if (typeof toast !== 'undefined') {
+                toast.success(`Added ${productName} to cart at agreed price ₹${parseFloat(agreedPrice).toFixed(2)}!`);
+            }
+        }
     },
 
     async loadMessages(convId) {
@@ -429,7 +906,7 @@ const FFMessaging = {
                 res = await API.messages.getMessages(convId);
             } else {
                 const token = localStorage.getItem('token');
-                const fetchRes = await fetch(`/api/features/conversations/${convId}/messages`, {
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/messages`), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 res = await fetchRes.json();
@@ -440,6 +917,10 @@ const FFMessaging = {
             const myId = user ? user.id : null;
             this.renderMessages(res.messages || [], myId);
             this.lastMessageCount = (res.messages || []).length;
+
+            if (res.conversation) {
+                this.currentConv = { ...this.currentConv, ...res.conversation };
+            }
         } catch (e) {
             if (container) container.innerHTML = `<div class="ff-chat-error"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load messages: ${e.message}</div>`;
         }
@@ -463,6 +944,25 @@ const FFMessaging = {
             const isMe = m.sender_id === myId;
             const time = new Date(m.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
             const date = new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+            // Structured offer / counter / accept / reject messages
+            if (m.message_type && m.message_type !== 'text') {
+                let badgeClass = 'ff-msg-system-offer';
+                let icon = 'fa-tag';
+                if (m.message_type === 'accept') { badgeClass = 'ff-msg-system-accept'; icon = 'fa-circle-check'; }
+                else if (m.message_type === 'counter') { badgeClass = 'ff-msg-system-counter'; icon = 'fa-reply'; }
+                else if (m.message_type === 'reject') { badgeClass = 'ff-msg-system-reject'; icon = 'fa-circle-xmark'; }
+                
+                return `
+                <div class="ff-msg-system-row">
+                    <div class="ff-msg-system-badge ${badgeClass}">
+                        <i class="fa-solid ${icon}"></i>
+                        <span>${this.escapeHtml(m.message)}</span>
+                        <span class="ff-msg-system-time">${time}</span>
+                    </div>
+                </div>`;
+            }
+
             return `
             <div class="ff-msg-row ${isMe ? 'ff-msg-mine' : 'ff-msg-theirs'}">
                 ${!isMe ? `<div class="ff-msg-avatar">${(m.sender_name || '?').charAt(0).toUpperCase()}</div>` : ''}
@@ -498,7 +998,7 @@ const FFMessaging = {
                 res = await API.messages.send(convId, msg);
             } else {
                 const token = localStorage.getItem('token');
-                const fetchRes = await fetch(`/api/features/conversations/${convId}/messages`, {
+                const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/messages`), {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -523,15 +1023,17 @@ const FFMessaging = {
 
     startPolling(convId, intervalMs = 4000) {
         this.stopPolling();
+        this.pollTick = 0;
         this.pollTimer = setInterval(async () => {
             if (!this.currentConvId) return;
+            this.pollTick++;
             try {
                 let res;
                 if (typeof API !== 'undefined' && API.messages) {
                     res = await API.messages.getMessages(convId);
                 } else {
                     const token = localStorage.getItem('token');
-                    const fetchRes = await fetch(`/api/features/conversations/${convId}/messages`, {
+                    const fetchRes = await fetch(ffGetApiUrl(`/features/conversations/${convId}/messages`), {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     res = await fetchRes.json();
@@ -540,6 +1042,11 @@ const FFMessaging = {
                     const user = typeof auth !== 'undefined' ? auth.getCurrentUser() : (JSON.parse(localStorage.getItem('user') || 'null'));
                     this.renderMessages(res.messages, user ? user.id : null);
                     this.lastMessageCount = res.messages.length;
+                    // Also refresh negotiation if new message arrives
+                    this.loadNegotiation(convId, true);
+                } else if (this.pollTick % 2 === 0) {
+                    // Periodic negotiation state refresh
+                    this.loadNegotiation(convId, true);
                 }
             } catch (e) {}
         }, intervalMs);
@@ -564,7 +1071,7 @@ const FFMessaging = {
                 res = await API.messages.getConversations();
             } else {
                 const token = localStorage.getItem('token');
-                const fetchRes = await fetch('/api/features/conversations', {
+                const fetchRes = await fetch(ffGetApiUrl('/features/conversations'), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 res = await fetchRes.json();
@@ -596,12 +1103,18 @@ const FFMessaging = {
                         : '';
                     const pName = c.product_name || '';
                     const safeConv = JSON.stringify(c).replace(/"/g, '&quot;');
+                    const isAccepted = c.negotiation_status === 'accepted';
+                    const isOffer = ['offer_made', 'countered'].includes(c.negotiation_status);
 
                     return `
                     <div class="ff-conv-item" onclick="FFMessaging.openChatById(${c.id}, ${safeConv})">
                         <div class="ff-conv-avatar">${otherName.charAt(0).toUpperCase()}</div>
                         <div class="ff-conv-info">
-                            <div class="ff-conv-name">${otherName}</div>
+                            <div class="ff-conv-name">
+                                ${otherName}
+                                ${isAccepted ? `<span class="ff-status-badge accepted"><i class="fa-solid fa-check"></i> ₹${parseFloat(c.agreed_price || 0).toFixed(2)} Agreed</span>` : ''}
+                                ${isOffer ? `<span class="ff-status-badge pending"><i class="fa-solid fa-handshake"></i> Offer Active</span>` : ''}
+                            </div>
                             ${pName ? `<div class="ff-conv-product"><i class="fa-solid fa-tag"></i> ${pName} ${c.product_price ? `· ₹${c.product_price}/${c.product_unit || 'kg'}` : ''}</div>` : ''}
                             <div class="ff-conv-last-msg">${lastMsg}</div>
                         </div>
@@ -624,6 +1137,10 @@ const FFMessaging = {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/\n/g, '<br>');
+    },
+
+    escapeQuote(str) {
+        return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     },
 
     showToast(msg, type = 'info') {
@@ -1292,8 +1809,122 @@ const FFProductRequests = {
         gap: 8px;
     }
 
+    /* ─── NEGOTIATION / BARGAINING PANEL ─── */
+    .ff-chat-negotiation-area {
+        border-bottom: 1px solid #EEE9DA;
+        padding: 0 16px 12px;
+        background: #FAFAF7;
+    }
+    .ff-bargain-card {
+        background: white;
+        border: 1.5px solid #E5DEC8;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-top: 10px;
+    }
+    .ff-bargain-card.ff-bargain-accepted { border-color: #A7F3D0; background: #F0FDF4; }
+    .ff-bargain-card.ff-bargain-rejected { border-color: #FECACA; background: #FEF2F2; }
+    .ff-bargain-card.ff-bargain-actionable { border-color: #FDE68A; background: #FFFBEB; }
+    .ff-bargain-card.ff-bargain-pending { border-color: #BFDBFE; background: #EFF6FF; }
+    .ff-bargain-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .ff-bargain-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 12px; font-weight: 600;
+    }
+    .ff-bargain-badge.success  { background: #DCFCE7; color: #15803D; }
+    .ff-bargain-badge.info     { background: #DBEAFE; color: #1D4ED8; }
+    .ff-bargain-badge.alert    { background: #FEF3C7; color: #B45309; }
+    .ff-bargain-badge.danger   { background: #FEE2E2; color: #B91C1C; }
+    .ff-bargain-badge.primary  { background: #EAF0DF; color: #355C24; }
+    .ff-bargain-badge.neutral  { background: #F3F4F6; color: #4B5563; }
+    .ff-bargain-meta { font-size: 12px; color: #6F7168; }
+    .ff-bargain-meta del { color: #9B9D95; }
+    .ff-bargain-body { display: flex; flex-direction: column; gap: 10px; }
+    .ff-bargain-agreed-box {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .ff-bargain-price-col { display: flex; flex-direction: column; gap: 2px; }
+    .ff-bargain-label { font-size: 11.5px; color: #6F7168; font-weight: 500; }
+    .ff-bargain-agreed-val {
+        font-size: 22px; font-weight: 700; color: #15803D;
+        display: flex; align-items: baseline; gap: 3px;
+    }
+    .ff-bargain-agreed-val small { font-size: 13px; font-weight: 500; color: #6F7168; }
+    .ff-bargain-subtext { font-size: 11.5px; color: #6F7168; }
+    .ff-bargain-farmer-note { font-size: 12.5px; color: #374151; display: flex; align-items: center; gap: 6px; }
+    .ff-bargain-offer-callout {
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(0,0,0,0.04); border-radius: 10px; padding: 10px 14px; gap: 12px;
+    }
+    .ff-offer-highlight { font-size: 20px; font-weight: 700; color: #1F211B; }
+    .ff-bargain-pending-txt, .ff-bargain-rejected-txt, .ff-bargain-farmer-none-txt {
+        font-size: 13px; color: #4B5563;
+    }
+    .ff-bargain-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ff-bargain-btn {
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px; font-weight: 600;
+        cursor: pointer;
+        border: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s;
+    }
+    .ff-bargain-btn.btn-accept    { background: #16A34A; color: white; }
+    .ff-bargain-btn.btn-accept:hover { background: #15803D; }
+    .ff-bargain-btn.btn-counter   { background: #F59E0B; color: white; }
+    .ff-bargain-btn.btn-counter:hover { background: #D97706; }
+    .ff-bargain-btn.btn-reject    { background: #DC2626; color: white; }
+    .ff-bargain-btn.btn-reject:hover { background: #B91C1C; }
+    .ff-bargain-btn.btn-buy-agreed { background: #355C24; color: white; }
+    .ff-bargain-btn.btn-buy-agreed:hover { background: #2D4F1E; transform: scale(1.02); }
+    .ff-bargain-btn.btn-send-offer, .ff-bargain-btn.btn-submit-counter { background: #355C24; color: white; }
+    .ff-bargain-btn.btn-send-offer:hover, .ff-bargain-btn.btn-submit-counter:hover { background: #2D4F1E; }
+    .ff-bargain-btn.btn-retry-offer { background: #EAF0DF; color: #355C24; border: 1.5px solid #A8BF72; }
+    .ff-bargain-input-row {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .ff-input-prefix, .ff-input-suffix {
+        font-size: 14px; font-weight: 600; color: #4B5563; flex-shrink: 0;
+    }
+    .ff-counter-input {
+        flex: 1; min-width: 90px;
+        padding: 8px 12px;
+        border: 1.5px solid #D1D5DB;
+        border-radius: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .ff-counter-input:focus { border-color: #355C24; }
+    .ff-counter-panel { margin-top: 10px; }
+
+    /* ─── STATUS BADGES IN CONVERSATION LIST ─── */
+    .ff-status-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 2px 8px;
+        border-radius: 100px;
+        font-size: 11px; font-weight: 600;
+        margin-left: 6px;
+    }
+    .ff-status-badge.accepted { background: #DCFCE7; color: #15803D; }
+    .ff-status-badge.pending  { background: #FEF3C7; color: #B45309; }
+
     @media (max-width: 480px) {
         .ff-chat-container { max-height: 95vh; border-radius: 14px; }
+        .ff-bargain-btn-row { gap: 6px; }
+        .ff-bargain-btn { padding: 7px 10px; font-size: 12px; }
     }
     `;
     if (!document.getElementById('ff-features-css')) {

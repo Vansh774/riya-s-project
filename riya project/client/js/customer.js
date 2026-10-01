@@ -1029,6 +1029,7 @@ const customer = {
                                             <span>Qty: <strong>${item.quantity || 1}</strong></span>
                                             <span>•</span>
                                             <span>₹${parseFloat(item.price || 0).toFixed(2)} each</span>
+                                            ${item.is_negotiated ? '<span style="font-size:10px;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:10px;font-weight:600;"><i class="fas fa-handshake"></i> Negotiated</span>' : ''}
                                             ${item.farmer_name ? `<span>•</span><span class="order-item-farmer"><i class="fas fa-seedling"></i> ${item.farmer_name}</span>` : ''}
                                         </div>
                                     </div>
@@ -1791,6 +1792,7 @@ const customer = {
                             <div style="font-size:12.5px; font-weight:600; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
                             <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px;">
                                 Qty: ${itemQty} × ₹${itemPrice.toFixed(2)}
+                                ${item.is_negotiated ? '<span style="font-size:10px; background:#DCFCE7; color:#15803D; border-radius:100px; padding:1px 7px; margin-left:5px; font-weight:700;">Agreed Price</span>' : ''}
                             </div>
                         </div>
                         <div style="font-size:13px; font-weight:700; color:var(--green-dark); flex-shrink:0;">
@@ -1922,7 +1924,8 @@ const customer = {
         const orderPayload = {
             items: items.map(it => ({
                 product_id: parseInt(it.id, 10),
-                quantity: parseInt(it.quantity, 10) || 1
+                quantity: parseInt(it.quantity, 10) || 1,
+                ...(it.conversation_id ? { conversation_id: parseInt(it.conversation_id, 10) } : {})
             })),
             shipping_address: address,
             payment_method: paymentMethod,

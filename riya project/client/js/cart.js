@@ -50,7 +50,9 @@ const cart = {
                 image: product.image || product.image_url || 'assets/images/tomatoes.png',
                 farmer: product.farmer || product.farmer_name || 'Local Farm',
                 quantity: qtyToAdd,
-                maxQuantity: product.maxQuantity || 999
+                maxQuantity: product.maxQuantity || 999,
+                conversation_id: product.conversation_id || null,
+                is_negotiated: product.is_negotiated || false
             });
         }
         
@@ -202,7 +204,10 @@ const cart = {
                     <img src="${item.image || 'assets/images/tomatoes.png'}" alt="${item.name}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; background:var(--beige); flex-shrink:0;" onerror="this.src='assets/images/tomatoes.png'">
                     <div style="flex:1; min-width:0;">
                         <h4 style="font-size:12.5px; font-weight:600; color:var(--text-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</h4>
-                        <div style="font-size:12px; font-weight:700; color:var(--green-primary); margin-top:2px;">₹${(parseFloat(item.price)||0).toFixed(2)}</div>
+                        <div style="font-size:12px; font-weight:700; color:var(--green-primary); margin-top:2px;">
+                            ₹${(parseFloat(item.price)||0).toFixed(2)}
+                            ${item.is_negotiated ? '<span style="font-size:10px; background:#DCFCE7; color:#15803D; border-radius:100px; padding:1px 7px; margin-left:5px; font-weight:700;">✓ Agreed</span>' : ''}
+                        </div>
                         <div style="font-size:10.5px; color:var(--text-muted);">${item.farmer || 'Local Farm'}</div>
                         <div style="display:inline-flex; align-items:center; gap:8px; margin-top:6px; background:var(--white); border:1px solid var(--beige-mid); border-radius:var(--radius-pill); padding:2px 8px;">
                             <button onclick="cart.updateQuantity(${item.id}, -1)" style="font-weight:700; color:var(--text-dark); font-size:13px; cursor:pointer;">−</button>
