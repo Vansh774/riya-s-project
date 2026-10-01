@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const { testConnection, pool } = require('./config/database');
+const { runAutoMigration } = require('./database/autoMigrate');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -198,6 +199,9 @@ const startServer = async () => {
             console.error('❌ Cannot start server without database connection');
             process.exit(1);
         }
+
+        // Auto-synchronize missing database tables and columns
+        await runAutoMigration();
 
         server.listen(PORT, () => {
             console.log(`🚀 Server with Socket.io running on http://localhost:${PORT}`);
